@@ -1,5 +1,6 @@
 string MapJsonPath(const string&in mapId) {
-  return IO::FromStorageFolder(mapId + ".json");
+  IO::CreateFolder(IO::FromStorageFolder("maps"));
+  return IO::FromStorageFolder("maps/" + mapId + ".json");
 }
 
 // Builds a Json array from a 2D int array.
