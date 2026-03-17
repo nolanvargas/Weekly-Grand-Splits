@@ -1,0 +1,8 @@
+[meta]
+name = "Weekly Grand Splits"
+author = "Yhomas"
+category = "Race"
+version = "0.2.0"
+
+[script]
+optional_dependencies = [ "MLHook", "MLFeedRaceData" ]
