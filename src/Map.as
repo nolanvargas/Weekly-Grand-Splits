@@ -78,7 +78,6 @@ void UpdateWaypoints() {
   auto playground = GetPlayground();
   if (playground is null || playground.Arena is null ||
       playground.Arena.Rules is null) {
-    debugText("map not ready for waypoint read?");
     return;
   }
 
@@ -89,7 +88,6 @@ void UpdateWaypoints() {
   }
   g_state.numLaps = map.TMObjective_NbLaps;
   g_state.isMultiLap = map.TMObjective_IsLapRace;
-  debugText("Map Laps: " + g_state.numLaps + " Is MultiLap: " + g_state.isMultiLap);
 #if TMNEXT
   MwFastBuffer<CGameScriptMapLandmark @> landmarks =
       playground.Arena.MapLandmarks;

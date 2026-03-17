@@ -79,7 +79,3 @@ class GameState {
 }
 
 GameState g_state;
-
-void debugText(const string&in text) {
-  // print(text);
-}
