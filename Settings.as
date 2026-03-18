@@ -4,32 +4,100 @@
 #include "cppIntellisense.h"
 #endif
 
-[Setting category="Display Settings" name="Window visible" description="To adjust the position of the window, click and drag while the Openplanet overlay is visible."]
+enum FontStyle {
+  Default,
+  Bold,
+  Mono
+}
+
+enum CpDisplayMode {
+  Absolute,
+  DeltaPB,
+  DeltaBestLapCp,
+  DeltaBestAllTime
+}
+
+// --- Lap Window ---
+
+[Setting category="Lap Window" name="Visible"]
 bool windowVisible = true;
 
-[Setting category="Display Settings" name="Hide on hidden interface"]
-bool hideWithIFace = false;
+[Setting category="Lap Window" name="Transposed (laps as columns)"]
+bool lapTableTransposed = false;
 
-[Setting category="Display Settings" name="Window position" drag]
-vec2 anchor = vec2(0, 780);
+[Setting category="Lap Window" name="Hide along with Trackmania UI"]
+bool lapHideWithIFace = false;
 
-[Setting category="Display Settings" name="Lock window position" description="Prevents the window moving when click and drag or when the game window changes size."]
-bool lockPosition = false;
+[Setting category="Lap Window" name="Lock window position"]
+bool lapLockPosition = false;
 
-[Setting category="Display Settings" name="Font face" description="To avoid a memory issue with loading a large number of fonts, you must reload the plugin for font changes to be applied."]
-string fontFace = "";
+[Setting category="Lap Window" name="Use thousandths precision"]
+bool lapUseThousandths = false;
 
-[Setting category="Display Settings" name="Font size" min=8 max=48 description="To avoid a memory issue with loading a large number of fonts, you must reload the plugin for font changes to be applied."]
-int fontSize = 23;
+[Setting category="Lap Window" name="Font size" min=8 max=48]
+int lapFontSize = 16;
 
-[Setting category="Display Settings" name="CP Table visible"]
+[Setting category="Lap Window" name="Font style"]
+FontStyle lapFontStyle = FontStyle::Default;
+
+[Setting category="Lap Window" name="Background color" color]
+vec4 lapWindowBgColor = vec4(0.06f, 0.06f, 0.06f, 0.70f);
+
+[Setting category="Lap Window" name="Text color" color]
+vec4 lapTextColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+[Setting category="Lap Window" name="Gradient background"]
+bool lapGradientEnabled = false;
+
+[Setting category="Lap Window" name="Gradient type: radial (off = linear top-to-bottom)"]
+bool lapGradientRadial = false;
+
+[Setting category="Lap Window" name="Gradient color 1 (top / inner)" color]
+vec4 lapGradientColor1 = vec4(0.06f, 0.06f, 0.06f, 0.85f);
+
+[Setting category="Lap Window" name="Gradient color 2 (bottom / outer)" color]
+vec4 lapGradientColor2 = vec4(0.15f, 0.15f, 0.25f, 0.55f);
+
+// --- CP Window ---
+
+[Setting category="CP Window" name="Visible"]
 bool cpTableVisible = true;
 
-[Setting category="Display Settings" name="CP Table position" drag]
-vec2 anchorCp = vec2(300, 780);
+[Setting category="CP Window" name="Time display mode"]
+CpDisplayMode cpDisplayMode = CpDisplayMode::Absolute;
 
-[Setting category="Display Settings" name="Use thousandths precision"]
-bool useThousandths = false;
+[Setting category="CP Window" name="Transposed (CPs as rows)"]
+bool cpTableTransposed = false;
 
-[Setting category="Display Settings" name="CP time display mode" min=0 max=3 description="0 = Absolute  1 = Delta from PB run  2 = Delta from best at that lap+CP  3 = Delta from best all-time across all laps"]
-int cpDisplayMode = 0;
+[Setting category="CP Window" name="Hide along with Trackmania UI"]
+bool cpHideWithIFace = false;
+
+[Setting category="CP Window" name="Lock window position"]
+bool cpLockPosition = false;
+
+[Setting category="CP Window" name="Use thousandths precision"]
+bool cpUseThousandths = false;
+
+[Setting category="CP Window" name="Font size" min=8 max=48]
+int cpFontSize = 16;
+
+[Setting category="CP Window" name="Font style"]
+FontStyle cpFontStyle = FontStyle::Default;
+
+[Setting category="CP Window" name="Background color" color]
+vec4 cpWindowBgColor = vec4(0.06f, 0.06f, 0.06f, 0.70f);
+
+[Setting category="CP Window" name="Text color" color]
+vec4 cpTextColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+[Setting category="CP Window" name="Gradient background"]
+bool cpGradientEnabled = false;
+
+[Setting category="CP Window" name="Radial"]
+bool cpGradientRadial = false;
+
+[Setting category="CP Window" name="Gradient color 1 (top / inner)" color]
+vec4 cpGradientColor1 = vec4(0.06f, 0.06f, 0.06f, 0.85f);
+
+[Setting category="CP Window" name="Gradient color 2 (bottom / outer)" color]
+vec4 cpGradientColor2 = vec4(0.15f, 0.15f, 0.25f, 0.55f);

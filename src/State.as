@@ -36,9 +36,6 @@ class GameState {
   int pbAttemptId = -1;                                // attempt_id of the current PB run
   array<array<array<int>>> allAttempts;                // [attempt][lap][cp]
   array<int> allAttemptIds;
-  string loadedFontFace = "";
-  int loadedFontSize = 0;
-  UI::Font@ font = null;
 
   // --- Methods ---
   int GetLapTime(int idx) {

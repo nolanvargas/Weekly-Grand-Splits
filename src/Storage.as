@@ -1,8 +1,3 @@
-string MapJsonPath(const string&in mapId) {
-  IO::CreateFolder(IO::FromStorageFolder("maps"));
-  return IO::FromStorageFolder("maps/" + mapId + ".json");
-}
-
 // Builds a Json array from a 2D int array.
 Json::Value@ Build2DArray(const array<array<int>>@ data) {
   Json::Value@ outer = Json::Array();
@@ -30,73 +25,133 @@ array<array<int>> Read2DArray(Json::Value@ outer) {
   return result;
 }
 
-// Builds the full JSON tree from current in-memory state.
-Json::Value@ BuildStateJson() {
-  Json::Value@ root = Json::Object();
-  root["version"] = Json::Value(1);
-
-  // attempts: all historical + current attempt's complete laps so far
-  Json::Value@ attemptsArr = Json::Array();
-  for (uint ai = 0; ai < g_state.allAttempts.Length; ai++) {
-    Json::Value@ atObj = Json::Object();
-    atObj["id"] = Json::Value(g_state.allAttemptIds[ai]);
-    atObj["laps"] = Build2DArray(g_state.allAttempts[ai]);
-    attemptsArr.Add(atObj);
-  }
-  if (g_state.currentLap > 0 && g_state.allLapCpTimes.Length > 0) {
-    Json::Value@ atObj = Json::Object();
-    atObj["id"] = Json::Value(g_state.currentAttemptId);
-    Json::Value@ lapsArr = Json::Array();
-    for (int li = 0; li < g_state.currentLap && li < int(g_state.allLapCpTimes.Length); li++) {
-      Json::Value@ lapArr = Json::Array();
-      for (uint ci = 0; ci < g_state.allLapCpTimes[li].Length; ci++) {
-        lapArr.Add(Json::Value(g_state.allLapCpTimes[li][ci]));
-      }
-      lapsArr.Add(lapArr);
-    }
-    atObj["laps"] = lapsArr;
-    attemptsArr.Add(atObj);
-  }
-  root["attempts"] = attemptsArr;
-
-  // in_progress: partial current lap (only if CPs have been hit)
-  if (!g_state.isFinished && g_state.currLapCpTimes.Length > 0) {
-    Json::Value@ ip = Json::Object();
-    ip["id"] = Json::Value(g_state.currentAttemptId);
-    ip["lap"] = Json::Value(g_state.currentLap + 1);
-    Json::Value@ cpsArr = Json::Array();
-    for (uint ci = 0; ci < g_state.currLapCpTimes.Length; ci++) {
-      cpsArr.Add(Json::Value(g_state.currLapCpTimes[ci]));
-    }
-    ip["cps"] = cpsArr;
-    root["in_progress"] = ip;
-  }
-
-  // pb
-  if (g_state.bestLapCpTimes.Length > 0) {
-    Json::Value@ pbObj = Json::Object();
-    pbObj["attempt_id"] = Json::Value(g_state.pbAttemptId);
-    pbObj["laps"] = Build2DArray(g_state.bestLapCpTimes);
-    root["pb"] = pbObj;
-  }
-
-  // lap_bests
-  Json::Value@ lapBestsArr = Json::Array();
-  for (int i = 0; i < MAX_LAPS; i++) lapBestsArr.Add(Json::Value(g_state.bestAllTimeLapTimes[i]));
-  root["lap_bests"] = lapBestsArr;
-
-  // cp_bests
-  if (g_state.bestAllTimeCpTimes.Length > 0) {
-    root["cp_bests"] = Build2DArray(g_state.bestAllTimeCpTimes);
-  }
-
-  return root;
+class StorageAttempt {
+  int id = 0;
+  array<array<int>> laps;
 }
 
-// Writes all state to JSON. Guarded: won't write before the player has raced.
+class StorageFile {
+  int version = 1;
+  array<StorageAttempt> attempts;
+  int pbAttemptId = -1;
+  array<array<int>> pbLaps;
+  int[] lapBests = {0,0,0,0,0,0,0,0,0,0};
+  array<array<int>> cpBests;
+
+  Json::Value@ ToJson() {
+    Json::Value@ root = Json::Object();
+    root["version"] = Json::Value(version);
+
+    Json::Value@ attArr = Json::Array();
+    for (uint i = 0; i < attempts.Length; i++) {
+      Json::Value@ atObj = Json::Object();
+      atObj["id"] = Json::Value(attempts[i].id);
+      atObj["laps"] = Build2DArray(attempts[i].laps);
+      attArr.Add(atObj);
+    }
+    root["attempts"] = attArr;
+
+    if (pbAttemptId >= 0 && pbLaps.Length > 0) {
+      Json::Value@ pbObj = Json::Object();
+      pbObj["attempt_id"] = Json::Value(pbAttemptId);
+      pbObj["laps"] = Build2DArray(pbLaps);
+      root["pb"] = pbObj;
+    }
+
+    Json::Value@ lbArr = Json::Array();
+    for (int i = 0; i < MAX_LAPS; i++) lbArr.Add(Json::Value(lapBests[i]));
+    root["lap_bests"] = lbArr;
+
+    if (cpBests.Length > 0) root["cp_bests"] = Build2DArray(cpBests);
+
+    return root;
+  }
+
+  void FromJson(Json::Value@ root) {
+    version = root.HasKey("version") ? int(root["version"]) : 1;
+
+    attempts = {};
+    if (root.HasKey("attempts")) {
+      Json::Value@ attArr = root["attempts"];
+      for (uint i = 0; i < attArr.Length; i++) {
+        Json::Value@ atObj = attArr[i];
+        if (!atObj.HasKey("id") || !atObj.HasKey("laps")) continue;
+        StorageAttempt at;
+        at.id = int(atObj["id"]);
+        at.laps = Read2DArray(atObj["laps"]);
+        attempts.InsertLast(at);
+      }
+    }
+
+    pbAttemptId = -1;
+    pbLaps = {};
+    if (root.HasKey("pb")) {
+      Json::Value@ pb = root["pb"];
+      pbAttemptId = pb.HasKey("attempt_id") ? int(pb["attempt_id"]) : -1;
+      if (pb.HasKey("laps")) pbLaps = Read2DArray(pb["laps"]);
+    }
+
+    lapBests = {0,0,0,0,0,0,0,0,0,0};
+    if (root.HasKey("lap_bests")) {
+      Json::Value@ lb = root["lap_bests"];
+      for (uint i = 0; i < lb.Length && i < MAX_LAPS; i++) lapBests[i] = int(lb[i]);
+    }
+
+    cpBests = {};
+    if (root.HasKey("cp_bests")) cpBests = Read2DArray(root["cp_bests"]);
+  }
+}
+
+StorageFile g_storage;
+
+string MapJsonPath(const string&in mapId) {
+  IO::CreateFolder(IO::FromStorageFolder("maps"));
+  return IO::FromStorageFolder("maps/" + mapId + ".json");
+}
+
+// Syncs g_state into g_storage, then serializes to JSON.
+Json::Value@ BuildStateJson() {
+  g_storage.version = 1;
+  g_storage.attempts = {};
+  for (uint ai = 0; ai < g_state.allAttempts.Length; ai++) {
+    StorageAttempt at;
+    at.id = g_state.allAttemptIds[ai];
+    at.laps = g_state.allAttempts[ai];
+    g_storage.attempts.InsertLast(at);
+  }
+
+  // in-progress attempt with -1 placeholders for unvisited CPs
+  bool hasCurrentData = g_state.currLapCpTimes.Length > 0 || g_state.currentLap > 0;
+  if (hasCurrentData && !g_state.isFinished) {
+    StorageAttempt at;
+    at.id = g_state.currentAttemptId;
+
+    for (int li = 0; li < g_state.currentLap && li < int(g_state.allLapCpTimes.Length); li++) {
+      at.laps.InsertLast(g_state.allLapCpTimes[li]);
+    }
+
+    array<int> curLap;
+    for (uint ci = 0; ci < g_state.currLapCpTimes.Length; ci++) curLap.InsertLast(g_state.currLapCpTimes[ci]);
+    int remaining = g_state.numCps - int(g_state.currLapCpTimes.Length);
+    for (int pi = 0; pi < remaining; pi++) curLap.InsertLast(-1);
+    at.laps.InsertLast(curLap);
+
+    g_storage.attempts.InsertLast(at);
+  }
+
+  g_storage.pbAttemptId = g_state.pbAttemptId;
+  g_storage.pbLaps = g_state.bestLapCpTimes;
+  for (int i = 0; i < MAX_LAPS; i++) g_storage.lapBests[i] = g_state.bestAllTimeLapTimes[i];
+  g_storage.cpBests = g_state.bestAllTimeCpTimes;
+
+  return g_storage.ToJson();
+}
+
+// Writes all state to JSON. Guarded: won't write until there is something to save.
 void SaveData() {
   string mapId = GetMapId();
-  if (mapId == "" || g_state.numCps == 0 || !g_state.hasPlayerRaced) return;
+  if (mapId == "" || g_state.numCps == 0) return;
+  if (g_state.allAttempts.Length == 0 && g_state.currLapCpTimes.Length == 0 && g_state.allLapCpTimes.Length == 0) return;
   Json::ToFile(MapJsonPath(mapId), BuildStateJson(), true);
 }
 
@@ -116,57 +171,31 @@ int ComputeNextAttemptId() {
   return maxId + 1;
 }
 
+// Populates g_storage from JSON, then syncs into g_state.
 void PopulateStateFromJson(Json::Value@ root) {
-  // attempts
+  g_storage.FromJson(root);
+
   g_state.allAttempts = {};
   g_state.allAttemptIds = {};
-  if (root.HasKey("attempts")) {
-    Json::Value@ attArr = root["attempts"];
-    for (uint ai = 0; ai < attArr.Length; ai++) {
-      Json::Value@ atObj = attArr[ai];
-      if (!atObj.HasKey("id") || !atObj.HasKey("laps")) continue;
-      g_state.allAttemptIds.InsertLast(int(atObj["id"]));
-      g_state.allAttempts.InsertLast(Read2DArray(atObj["laps"]));
-    }
+  for (uint i = 0; i < g_storage.attempts.Length; i++) {
+    g_state.allAttemptIds.InsertLast(g_storage.attempts[i].id);
+    g_state.allAttempts.InsertLast(g_storage.attempts[i].laps);
   }
   g_state.currentAttemptId = ComputeNextAttemptId();
 
-  // pb
-  if (root.HasKey("pb")) {
-    Json::Value@ pb = root["pb"];
-    g_state.pbAttemptId = pb.HasKey("attempt_id") ? int(pb["attempt_id"]) : -1;
-    if (pb.HasKey("laps")) {
-      Json::Value@ pbLaps = pb["laps"];
-      if (int(pbLaps.Length) == g_state.numLaps) {
-        g_state.bestLapCpTimes = {};
-        for (uint li = 0; li < pbLaps.Length; li++) {
-          array<int> cpRow;
-          int sum = 0;
-          Json::Value@ cps = pbLaps[li];
-          for (uint ci = 0; ci < cps.Length; ci++) {
-            int t = int(cps[ci]);
-            cpRow.InsertLast(t);
-            sum += t;
-          }
-          g_state.bestLapCpTimes.InsertLast(cpRow);
-          g_state.SetBestLapTime(int(li), sum);
-        }
-      }
+  g_state.pbAttemptId = g_storage.pbAttemptId;
+  if (g_storage.pbLaps.Length > 0 && int(g_storage.pbLaps.Length) == g_state.numLaps) {
+    g_state.bestLapCpTimes = {};
+    for (uint li = 0; li < g_storage.pbLaps.Length; li++) {
+      int sum = 0;
+      for (uint ci = 0; ci < g_storage.pbLaps[li].Length; ci++) sum += g_storage.pbLaps[li][ci];
+      g_state.bestLapCpTimes.InsertLast(g_storage.pbLaps[li]);
+      g_state.SetBestLapTime(int(li), sum);
     }
   }
 
-  // lap_bests
-  if (root.HasKey("lap_bests")) {
-    Json::Value@ lb = root["lap_bests"];
-    for (uint i = 0; i < lb.Length && i < MAX_LAPS; i++) {
-      g_state.SetBestAllTimeLapTime(int(i), int(lb[i]));
-    }
-  }
-
-  // cp_bests
-  if (root.HasKey("cp_bests")) {
-    g_state.bestAllTimeCpTimes = Read2DArray(root["cp_bests"]);
-  }
+  for (int i = 0; i < MAX_LAPS; i++) g_state.SetBestAllTimeLapTime(i, g_storage.lapBests[i]);
+  g_state.bestAllTimeCpTimes = g_storage.cpBests;
 }
 
 void LoadData() {

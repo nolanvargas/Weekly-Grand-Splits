@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2" pages="4">
   <diagram name="GameState" id="gamestate-class">
     <mxGraphModel dx="983" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -15,6 +15,108 @@
         </mxCell>
         <mxCell id="WSr-ogRWWzH96s44bFye-74" value="+ GetLapTime(idx: int) : int&lt;div&gt;+ SetLapTime(idx : int, time : int) : void&lt;/div&gt;&lt;div&gt;+ ResetLapTimes() : void&lt;/div&gt;&lt;div&gt;+ GetBestLapTime(idx : int) : int&lt;/div&gt;&lt;div&gt;+ SetBestLapTime(idx : int, time : int) : void&lt;/div&gt;&lt;div&gt;+ ResetBestLapTimes() : void&lt;/div&gt;&lt;div&gt;+ GetBestAllTimeLapTime(idx : int) : int&lt;/div&gt;&lt;div&gt;+ SetBestAllTimeLapTime(idx : int, time : int) : void&lt;/div&gt;&lt;div&gt;+ ResetBestAllTimeLapTimes() : void&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingTop=-8;spacingLeft=2;" vertex="1" parent="WSr-ogRWWzH96s44bFye-71">
           <mxGeometry y="388" width="240" height="112" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="StorageFile" id="storagefile-class">
+    <mxGraphModel dx="983" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SFC-1" value="StorageFile" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="200" y="120" width="240" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-2" value="+ version: int&lt;div&gt;+ attempts: StorageAttempt[]&lt;/div&gt;&lt;div&gt;+ pbAttemptId: int&lt;/div&gt;&lt;div&gt;+ pbLaps: int[][] {[lap][cp]}&lt;/div&gt;&lt;div&gt;+ lapBests: int[MAX_LAPS]&lt;/div&gt;&lt;div&gt;+ cpBests: int[][] {[lap][cp]}&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingLeft=2;spacingTop=-4;" vertex="1" parent="SFC-1">
+          <mxGeometry y="20" width="240" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-3" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="SFC-1">
+          <mxGeometry y="116" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-4" value="+ ToJson(): Json::Value@&lt;div&gt;+ FromJson(root: Json::Value@): void&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingTop=-8;spacingLeft=2;" vertex="1" parent="SFC-1">
+          <mxGeometry y="124" width="240" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-5" value="StorageAttempt" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="540" y="145" width="200" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-6" value="+ id: int&lt;div&gt;+ laps: int[][] {[lap][cp]}&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingLeft=2;spacingTop=-4;" vertex="1" parent="SFC-5">
+          <mxGeometry y="20" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-7" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="SFC-5">
+          <mxGeometry y="60" width="200" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-8" value="" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamondThin;startFill=1;endArrow=open;endSize=8;startSize=8;" edge="1" source="SFC-1" target="SFC-5" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SFC-9" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontFamily=Helvetica;" vertex="1" connectable="0" parent="SFC-8">
+          <mxGeometry x="-0.8" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="SFC-10" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontFamily=Helvetica;" vertex="1" connectable="0" parent="SFC-8">
+          <mxGeometry x="0.8" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Settings" id="settings-class">
+    <mxGraphModel dx="983" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SET-1" value="Lap Window" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="240" height="284" as="geometry" />
+        </mxCell>
+        <mxCell id="SET-2" value="windowVisible: bool&lt;div&gt;anchor: vec2&lt;/div&gt;&lt;div&gt;lapTableTransposed: bool&lt;/div&gt;&lt;div&gt;lapHideWithIFace: bool&lt;/div&gt;&lt;div&gt;lapLockPosition: bool&lt;/div&gt;&lt;div&gt;lapUseThousandths: bool&lt;/div&gt;&lt;div&gt;lapFontFace: string&lt;/div&gt;&lt;div&gt;lapFontSize: int {8..48}&lt;/div&gt;&lt;div&gt;lapFontBold: bool&lt;/div&gt;&lt;div&gt;lapFontBoldFace: string&lt;/div&gt;&lt;div&gt;lapWindowBgColor: vec4&lt;/div&gt;&lt;div&gt;lapTextColor: vec4&lt;/div&gt;&lt;div&gt;lapGradientEnabled: bool&lt;/div&gt;&lt;div&gt;lapGradientRadial: bool&lt;/div&gt;&lt;div&gt;lapGradientColor1: vec4&lt;/div&gt;&lt;div&gt;lapGradientColor2: vec4&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingLeft=2;spacingTop=-4;" vertex="1" parent="SET-1">
+          <mxGeometry y="20" width="240" height="256" as="geometry" />
+        </mxCell>
+        <mxCell id="SET-3" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="SET-1">
+          <mxGeometry y="276" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="SET-4" value="CP Window" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="420" y="120" width="240" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="SET-5" value="cpTableVisible: bool&lt;div&gt;anchorCp: vec2&lt;/div&gt;&lt;div&gt;cpDisplayMode: int {0..3}&lt;/div&gt;&lt;div&gt;cpTableTransposed: bool&lt;/div&gt;&lt;div&gt;cpHideWithIFace: bool&lt;/div&gt;&lt;div&gt;cpLockPosition: bool&lt;/div&gt;&lt;div&gt;cpUseThousandths: bool&lt;/div&gt;&lt;div&gt;cpFontFace: string&lt;/div&gt;&lt;div&gt;cpFontSize: int {8..48}&lt;/div&gt;&lt;div&gt;cpFontBold: bool&lt;/div&gt;&lt;div&gt;cpFontBoldFace: string&lt;/div&gt;&lt;div&gt;cpWindowBgColor: vec4&lt;/div&gt;&lt;div&gt;cpTextColor: vec4&lt;/div&gt;&lt;div&gt;cpGradientEnabled: bool&lt;/div&gt;&lt;div&gt;cpGradientRadial: bool&lt;/div&gt;&lt;div&gt;cpGradientColor1: vec4&lt;/div&gt;&lt;div&gt;cpGradientColor2: vec4&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingLeft=2;spacingTop=-4;" vertex="1" parent="SET-4">
+          <mxGeometry y="20" width="240" height="272" as="geometry" />
+        </mxCell>
+        <mxCell id="SET-6" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="SET-4">
+          <mxGeometry y="292" width="240" height="8" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Modules" id="modules-class">
+    <mxGraphModel dx="983" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="MOD-1" value="Format" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="240" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-2" value="g_fmtThousandths: bool" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingLeft=2;spacingTop=-4;" vertex="1" parent="MOD-1">
+          <mxGeometry y="20" width="240" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-3" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="MOD-1">
+          <mxGeometry y="36" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-4" value="FormatDelta(ms: int): string&lt;div&gt;FormatTenth(ms: int): string&lt;/div&gt;&lt;div&gt;FormatCpTime(ms: int): string&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingTop=-8;spacingLeft=2;" vertex="1" parent="MOD-1">
+          <mxGeometry y="44" width="240" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-5" value="Records" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="380" y="120" width="240" height="93" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-6" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="MOD-5">
+          <mxGeometry y="20" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-7" value="ArchiveCurrentAttempt(): void&lt;div&gt;SaveLapCpTimes(lapIdx: int): void&lt;/div&gt;&lt;div&gt;CreateOrUpdateBestTime(time: int): void&lt;/div&gt;&lt;div&gt;CheckAndUpdatePB(): void&lt;/div&gt;&lt;div&gt;UpdateCpBest(lapIdx: int, cpIdx: int, time: int): void&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingTop=-8;spacingLeft=2;" vertex="1" parent="MOD-5">
+          <mxGeometry y="28" width="240" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-8" value="GameAPI" style="swimlane;backgroundColor=#d9d9d9;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=20;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;fillColor=#D9D9D9;labelBackgroundColor=none;swimlaneFillColor=#f3f3f3;spacingBottom=5;spacingTop=-2;spacingLeft=3;points=[[0,0,0,0,0],[0,0.25,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" vertex="1" parent="1">
+          <mxGeometry x="680" y="120" width="240" height="184" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-9" value="" style="line;strokeWidth=1;fillColor=#f3f3f3;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;fillStyle=solid;fontFamily=Helvetica;fontSize=10;" vertex="1" parent="MOD-8">
+          <mxGeometry y="20" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="MOD-10" value="GetPlayground(): CSmArenaClient@&lt;div&gt;GetPlaygroundScript(): CSmArenaRulesMode@&lt;/div&gt;&lt;div&gt;GetCurrentGameTime(): int&lt;/div&gt;&lt;div&gt;GetPlayer(): CSmPlayer@&lt;/div&gt;&lt;div&gt;GetPlayerScript(): CSmScriptPlayer@&lt;/div&gt;&lt;div&gt;IsPlayerReady(): bool&lt;/div&gt;&lt;div&gt;GetCurrentPlayerRaceTime(): int&lt;/div&gt;&lt;div&gt;GetPlayerCheckpointTime(): int&lt;/div&gt;&lt;div&gt;GetPlayerStartTime(): int&lt;/div&gt;&lt;div&gt;GetActualPlayerStartTime(): int&lt;/div&gt;&lt;div&gt;GetUICheckpointTime(): int&lt;/div&gt;&lt;div&gt;GetCurrentCheckpoint(): int&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fillStyle=solid;strokeWidth=1;fontFamily=Helvetica;fontSize=10;points=[];spacingTop=-8;spacingLeft=2;" vertex="1" parent="MOD-8">
+          <mxGeometry y="28" width="240" height="156" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

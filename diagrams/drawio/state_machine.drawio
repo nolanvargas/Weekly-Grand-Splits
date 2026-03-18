@@ -1,0 +1,100 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram name="Race State Machine" id="race-state-machine">
+    <mxGraphModel dx="810" dy="490" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SM-racing" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#f3f3f3;strokeColor=#333333;fontFamily=Helvetica;fontSize=11;fontStyle=1;" value="&lt;span style=&quot;font-weight: normal;&quot;&gt;Racing&lt;/span&gt;" vertex="1">
+          <mxGeometry height="40" width="130" x="315" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="SM-T1" edge="1" parent="1" source="cZNeQpMFObGKKp4LSFYL-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=-10;entryPerimeter=0;" target="cZNeQpMFObGKKp4LSFYL-3" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="384.0707054838963" y="39.956726958256354" as="sourcePoint" />
+            <mxPoint x="380" y="60" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T2" edge="1" parent="1" source="cZNeQpMFObGKKp4LSFYL-3" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=0.5;exitY=0.5;exitDx=0;exitDy=10;exitPerimeter=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=-10;entryPerimeter=0;startArrow=classic;startFill=1;" target="cZNeQpMFObGKKp4LSFYL-4" value="mapLoaded">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="380" y="100" as="sourcePoint" />
+            <mxPoint x="380" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T4" edge="1" parent="1" source="cZNeQpMFObGKKp4LSFYL-5" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=0.5;exitY=0.5;exitDx=0;exitDy=10;exitPerimeter=0;" target="SM-racing" value="IsPlayerReady()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="280" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T6" edge="1" parent="1" source="SM-racing" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=0;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="SM-racing" value="checkpointHit&lt;div&gt;[isFinish &amp;amp;&amp;amp; !lastLap]&lt;div&gt;currentLap++&lt;/div&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.3612" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="290" y="270" />
+              <mxPoint x="290" y="340" />
+              <mxPoint x="348" y="340" />
+              <mxPoint x="348" y="290" />
+            </Array>
+            <mxPoint x="160" y="379.9999999999999" as="sourcePoint" />
+            <mxPoint x="200" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T7" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;entryX=0.5;entryY=0.5;entryDx=0;entryDy=-10;entryPerimeter=0;" target="cZNeQpMFObGKKp4LSFYL-7" value="checkpointHit&lt;div&gt;[isFinish &amp;amp;&amp;amp; lastLap]&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.0027" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="410" y="290" as="sourcePoint" />
+            <mxPoint x="380" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T8" edge="1" parent="1" source="cZNeQpMFObGKKp4LSFYL-7" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="cZNeQpMFObGKKp4LSFYL-4" value="waitForCarReset&lt;div&gt;resetData&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="350" />
+              <mxPoint x="470" y="130" />
+            </Array>
+            <mxPoint x="445" y="450" as="sourcePoint" />
+            <mxPoint x="485" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T9" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="cZNeQpMFObGKKp4LSFYL-3" value="[mapId == &quot;&quot;]&lt;div&gt;ResetCommon()&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.3103" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="290" y="130" />
+              <mxPoint x="290" y="60" />
+            </Array>
+            <mxPoint x="300" y="130" as="sourcePoint" />
+            <mxPoint x="315" y="80" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SM-T10" edge="1" parent="1" source="SM-racing" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;fontFamily=Helvetica;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="cZNeQpMFObGKKp4LSFYL-4" value="mapChanged&lt;div&gt;ResetCommon()&lt;/div&gt;&lt;div&gt;LoadData()&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.35" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="290" y="270" />
+              <mxPoint x="290" y="130" />
+            </Array>
+            <mxPoint x="275" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="15" width="15" x="372.5" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-3" parent="1" style="html=1;dashed=0;whitespace=wrap;shape=mxgraph.dfd.start;fillColor=#F3F3F3;" value="Idle" vertex="1">
+          <mxGeometry height="20" width="50" x="355" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-4" parent="1" style="html=1;dashed=0;whitespace=wrap;shape=mxgraph.dfd.start;fillColor=#F3F3F3;" value="Waiting For Reset" vertex="1">
+          <mxGeometry height="20" width="110" x="325" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-5" parent="1" style="html=1;dashed=0;whitespace=wrap;shape=mxgraph.dfd.start;fillColor=#F3F3F3;" value="Waiting For Start" vertex="1">
+          <mxGeometry height="20" width="110" x="325" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-7" parent="1" style="html=1;dashed=0;whitespace=wrap;shape=mxgraph.dfd.start;fillColor=#F3F3F3;" value="Finished Race" vertex="1">
+          <mxGeometry height="20" width="95" x="362" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="cZNeQpMFObGKKp4LSFYL-8" edge="1" parent="1" source="cZNeQpMFObGKKp4LSFYL-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0.5;entryDx=0;entryDy=-10;entryPerimeter=0;startArrow=classic;startFill=1;" target="cZNeQpMFObGKKp4LSFYL-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

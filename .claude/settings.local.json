@@ -6,7 +6,8 @@
       "Bash(pip install:*)",
       "Bash(python -m pip install graphviz matplotlib --quiet)",
       "Bash(dot -V)",
-      "Bash(python gen_flowchart.py)"
+      "Bash(python gen_flowchart.py)",
+      "Bash(python -c \":*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\nolan\\OpenplanetNext\\PluginStorage\\Weekly Grand Splits"

@@ -102,10 +102,10 @@ void UpdateWaypoints() {
       continue;
     }
     if (landmarks[i].Tag == "Checkpoint") {
-      g_state.numCps++;
+      g_state.numCps = g_state.numCps + 1;
     } else if (landmarks[i].Tag == "LinkedCheckpoint") {
       if (links.Find(landmarks[i].Order) < 0) {
-        g_state.numCps++;
+        g_state.numCps = g_state.numCps + 1;
         links.InsertLast(landmarks[i].Order);
       }
     } else {
@@ -114,13 +114,13 @@ void UpdateWaypoints() {
              playground.Map.IdName +
              "), is not compliant with checkpoint naming rules.");
       }
-      g_state.numCps++;
+      g_state.numCps = g_state.numCps + 1;
       strictMode = false;
     }
   }
 
   if (g_state.isMultiLap && g_state.numLaps == 1) {
-    g_state.numCps--;
+    g_state.numCps = g_state.numCps - 1;
     g_state.isMultiLap = false;
   }
 

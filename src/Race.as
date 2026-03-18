@@ -131,7 +131,7 @@ void Update(float dt) {
     if (IsWaypointFinish(cp)) {
 #endif
       g_state.hasFinishedMap = true;
-      g_state.currentLap++;
+      g_state.currentLap = g_state.currentLap + 1;
       if (g_state.isMultiLap) {        
       }
 
