@@ -24,8 +24,6 @@ void ResetRace(Attempt@ previousAttemptForBests) {
   g_state.lastCpTime = 0;
 
 #if TMNEXT
-    // on TMNEXT, initialize the last checkpoint index to the player's spawn CP so 
-    // future CP changes are detected correctly.
     g_state.lastCP = GetSpawnCheckpoint();
 #endif
 }

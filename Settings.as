@@ -101,3 +101,23 @@ vec4 cpGradientColor1 = vec4(0.06f, 0.06f, 0.06f, 0.85f);
 
 [Setting category="CP Window" name="Gradient color 2 (bottom / outer)" color]
 vec4 cpGradientColor2 = vec4(0.15f, 0.15f, 0.25f, 0.55f);
+
+// --- Advanced style (table column min-widths, pixels) ---
+
+[Setting category="Advanced style" name="Lap table: Lap column" min=8 max=120]
+int styleColWidthLap = 32;
+
+[Setting category="Advanced style" name="Lap table: +/- column" min=8 max=200]
+int styleColWidthDelta = 72;
+
+[Setting category="Advanced style" name="Lap table: Time column" min=8 max=200]
+int styleColWidthTime = 72;
+
+[Setting category="Advanced style" name="CP table: Lap column" min=8 max=80]
+int styleColWidthCpLap = 16;
+
+[Setting category="Advanced style" name="CP table: split column (absolute)" min=16 max=200]
+int styleColWidthCpAbs = 36;
+
+[Setting category="Advanced style" name="CP table: split column (delta)" min=16 max=200]
+int styleColWidthCpDelta = 52;

@@ -2,19 +2,18 @@
 // Shows completed laps, the currently active lap with live delta, and a total row.
 void RenderLapTableNormal(bool isRacing, int liveTime) {
   if (UI::BeginTable("splits", 3, UI::TableFlags::SizingFixedFit)) {
-    // Actions: open a 3-column ImGui table for lap index, delta vs PB, and lap time using fixed column widths.
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_LAP);   UI::Text("Lap");
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_DELTA); UI::Text("+/-");
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_TIME);  UI::Text("Time");
+    // open a 3-column ImGui table for lap index, delta vs PB, and lap time using fixed column widths.
+    UI::TableNextColumn(); SetMinWidth(styleColWidthLap);   UI::Text("Lap");
+    UI::TableNextColumn(); SetMinWidth(styleColWidthDelta); UI::Text("+/-");
+    UI::TableNextColumn(); SetMinWidth(styleColWidthTime);  UI::Text("Time");
 
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
       bool completed = g_state.GetLapTime(lapIdx) != -1;
       bool active    = isRacing && (lapIdx == g_state.currentLap);
-      // Actions: treat laps with stored times as completed, and mark the current lap as active while a run is in progress.
 
       if (completed) {
-        // Actions: show final time for a completed lap plus its delta vs PB, highlighting golds where the time beats the all-time best.
+        // show final time for a completed lap plus its delta vs PB, highlighting golds where the time beats the all-time best.
         bool hasBest = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx) != -1;
         int bestLap   = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
         int delta     = hasBest ? (g_state.GetLapTime(lapIdx) - bestLap) : 0;
@@ -29,26 +28,26 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
         if (isGold) UI::PopStyleColor();
 
       } else if (active) {
-        // Actions: for the currently racing lap, display a live delta vs PB (if reasonable) and the live lap timer.
+        // for the currently racing lap, display a live delta vs PB (if reasonable) and the live lap timer.
         bool hasBest   = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx) != -1;
         int bestLap    = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
         int liveDelta  = hasBest ? (liveTime - bestLap) : 0;
         bool showDelta = hasBest && liveDelta >= -5000;
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
         if (showDelta) {
-          // Actions: when the live delta is within a reasonable window, color it green/red and show both delta and live time.
+          // when the live delta is within a reasonable window, color it green/red and show both delta and live time.
           UI::PushStyleColor(UI::Col::Text, GetLiveDeltaColor(liveDelta));
           UI::TableNextColumn(); UI::Text(FormatDelta(liveDelta));
           UI::PopStyleColor();
           UI::TableNextColumn(); UI::Text(FormatTenth(liveTime));
         } else {
-          // Actions: otherwise, hide the delta column and only show the live time for the lap.
+          // otherwise, hide the delta column and only show the live time for the lap.
           UI::TableNextColumn(); UI::Text("-");
           UI::TableNextColumn(); UI::Text(FormatTenth(liveTime));
         }
 
       } else {
-        // Actions: for laps that have not started yet, draw placeholder "-" cells for readability.
+        // for laps that have not started yet, draw placeholder "-" cells for readability.
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
         UI::TableNextColumn(); UI::Text("-");
         UI::TableNextColumn(); UI::Text("-");
@@ -68,13 +67,13 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
     bool allCompletedHaveBest = true;
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       if (g_state.GetLapTime(lapIdx) != -1) {
-        // Actions: accumulate total run time only for laps that have been completed.
+        // accumulate total run time only for laps that have been completed.
         totalRun += g_state.GetLapTime(lapIdx);
         hasCompletedLap = true;
         int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
       if (bestLap != -1) bestForCompleted += bestLap;
         else allCompletedHaveBest = false;
-        // Actions: if any completed lap lacks a PB, mark that we cannot compute a meaningful total delta.
+        // if any completed lap lacks a PB, mark that we cannot compute a meaningful total delta.
       }
     }
     int displayTotal = totalRun + (isRacing ? liveTime : 0);
@@ -100,7 +99,7 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
   bool hasCompletedLap = false, allCompletedHaveBest = true;
   for (int i = 0; i < MAX_LAPS; i++) {
     if (g_state.GetLapTime(i) != -1) {
-      // Actions: for each completed lap, add its time to the total and, when available, its PB to the comparison baseline.
+      // for each completed lap, add its time to the total and, when available, its PB to the comparison baseline.
       totalRun += g_state.GetLapTime(i); hasCompletedLap = true;
       int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(i);
       if (bestLap != -1) bestForCompleted += bestLap;
@@ -116,11 +115,11 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
   // cols: label | Lap1..Lap10 | Total = 12
   if (UI::BeginTable("splits_t", 1 + MAX_LAPS + 1, UI::TableFlags::SizingFixedFit)) {
     // Header row: blank | 1 | 2 | ... | 10 | blank
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_DELTA);
+    UI::TableNextColumn(); SetMinWidth(styleColWidthDelta);
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
-      UI::TableNextColumn(); SetMinWidth(COL_WIDTH_TIME); UI::Text("" + (lapIdx + 1));
+      UI::TableNextColumn(); SetMinWidth(styleColWidthTime); UI::Text("" + (lapIdx + 1));
     }
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_TIME);
+    UI::TableNextColumn(); SetMinWidth(styleColWidthTime);
 
     // +/- row
     UI::TableNextRow();

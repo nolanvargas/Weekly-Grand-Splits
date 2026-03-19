@@ -2,9 +2,8 @@
 // Each cell shows either absolute CP time or a delta against a chosen reference.
 void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidth, array<int>@ bestEverCp) {
   if (UI::BeginTable("cptable", numCols + 1, UI::TableFlags::SizingFixedFit)) {
-    // Actions: open a CP table with a lap label column plus one column per CP/finish using fixed minimum widths.
     // header row
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_CP_LAP); UI::Text("Lap");
+    UI::TableNextColumn(); SetMinWidth(styleColWidthCpLap); UI::Text("Lap");
     for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
       UI::TableNextColumn(); SetMinWidth(colWidth);
       UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
@@ -14,23 +13,21 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
       array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
+      // mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
       bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
       bool active    = isRacing && lapIdx == g_state.currentLap;
-      // Actions: mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
 
       if (completed || active) {
-        // Actions: for completed or active laps, render each CP cell as either an absolute time or delta vs the chosen reference.
+        // for completed or active laps, render each CP cell as either an absolute time or delta vs the chosen reference.
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
         array<int> cpTimes;
         if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
         for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
           UI::TableNextColumn();
           if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
-          // Actions: if we do not have a split for this CP index, leave a "-" placeholder and skip rendering a time.
           RenderCpCell(cpTimes[cpIdx], GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
         }
       } else {
-        // Actions: for laps that have not started yet, show the lap index with "-" in every CP column.
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
         for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
           UI::TableNextColumn(); UI::Text("-");
@@ -47,9 +44,9 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
 void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int colWidth, array<int>@ bestEverCp) {
   // cols: CP label | Lap1..Lap10 = 1 + MAX_LAPS = 11
   if (UI::BeginTable("cptable_t", 1 + MAX_LAPS, UI::TableFlags::SizingFixedFit)) {
-    // Actions: open a transposed CP table where rows are CPs and columns are laps, to compare the same CP across attempts.
+    // open a transposed CP table where rows are CPs and columns are laps, to compare the same CP across attempts.
     // header row: "Lap" | 1 | 2 | ... | 10
-    UI::TableNextColumn(); SetMinWidth(COL_WIDTH_CP_ABS); UI::Text("Lap");
+    UI::TableNextColumn(); SetMinWidth(styleColWidthCpAbs); UI::Text("Lap");
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + (lapIdx + 1));
     }
@@ -64,11 +61,9 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
         bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
         bool active    = isRacing && lapIdx == g_state.currentLap;
         if (!completed && !active) { UI::Text("-"); continue; }
-        // Actions: if the lap has no stored CP data and is not currently active, show "-" for this CP position.
       array<int> cpTimes;
       if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
         if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
-        // Actions: when the CP index is beyond the recorded splits for that lap, render "-" instead of a time.
         RenderCpCell(cpTimes[cpIdx], GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
       }
     }
@@ -81,7 +76,6 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
 // Handles visibility guards, window placement, and mode selection.
 void RenderCpTable() {
   if (!cpTableVisible) return;
-  // Actions: when the CP window visibility setting is off, skip constructing the window and exit early.
 
   auto app = cast<CTrackMania>(GetApp());
 #if TMNEXT
@@ -89,37 +83,30 @@ void RenderCpTable() {
 #endif
 
   if (!g_state.isMultiLap) return;
-  // Actions: only show CP tables for multi-lap maps; on single-lap maps, do nothing.
-
   if (cpHideWithIFace) {
-    // Actions: when this option is enabled, hide the CP window whenever the Trackmania UI itself is hidden or unavailable.
     auto playground = app.CurrentPlayground;
     if (playground is null || playground.Interface is null ||
         !UI::IsGameUIVisible()) {
-      // Actions: if we cannot access a valid playground/interface or the game UI is hidden, stop rendering the CP window.
       return;
     }
   }
 
   if (map is null || map.MapInfo.MapUid == "") return;
-  // Actions: require a valid loaded map (with UID) before showing CP splits; otherwise exit without drawing anything.
 
   // Determine column count from data.
   array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
   int numCols = g_state.numCps;
   for (uint lapIdx = 0; lapIdx < lapCp.Length; lapIdx++) {
+    // grow the CP column count to accommodate the longest split list.
     if (int(lapCp[lapIdx].Length) > numCols) numCols = int(lapCp[lapIdx].Length);
-    // Actions: grow the CP column count to accommodate the longest split list.
   }
-  // Actions: ensure numCols covers historical splits; even when there are
+  // ensure numCols covers historical splits; even when there are
   // no recorded CPs yet (numCols == 0), still show the empty window so the user can see that
   // the map is eligible and the CP overlay is active.
 
   if (cpLockPosition) {
-    // Actions: when configured to lock position, always set the window to the stored CP anchor coordinates.
     UI::SetNextWindowPos(int(anchorCp.x), int(anchorCp.y), UI::Cond::Always);
   } else {
-    // Actions: when unlocked, only set the initial window position once and then allow the user to drag it.
     UI::SetNextWindowPos(int(anchorCp.x), int(anchorCp.y), UI::Cond::FirstUseEver);
   }
 
@@ -127,7 +114,6 @@ void RenderCpTable() {
       UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
       UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
   if (!UI::IsOverlayShown()) {
-    // Actions: keep rendering for visuals, but disable inputs when the overlay itself is hidden.
     windowFlags |= UI::WindowFlags::NoInputs;
   }
 
@@ -154,11 +140,10 @@ void RenderCpTable() {
   }
 
   bool deltaMode = cpDisplayMode != CpDisplayMode::Absolute;
-  int colWidth = deltaMode ? COL_WIDTH_CP_DELTA : COL_WIDTH_CP_ABS;
+  int colWidth = deltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
 
   if (cpTableTransposed) RenderCpTableTransposed(isRacing, numCols, deltaMode, colWidth, bestEverCp);
   else                   RenderCpTableNormal(isRacing, numCols, deltaMode, colWidth, bestEverCp);
-  // Actions: depending on the layout mode, render either the per-lap rows or per-CP rows using the computed configuration.
 
   UI::End();
   UI::PopStyleColor(2);
