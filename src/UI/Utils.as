@@ -60,13 +60,13 @@ void RenderCpCell(int cpTime, int refTime, bool deltaMode) {
 int GetCpRefTime(int lapIdx, int cpIdx, array<int>@ bestEverCp) {
   if (cpDisplayMode == CpDisplayMode::DeltaPB) {
     // Actions: for DeltaPB, use the per-lap PB split at this [lap, cp] as the reference time when it exists.
-    return g_state.GetBests().GetBestSingleAttemptCpTime(lapIdx, cpIdx);
+    return g_state.bests.GetBestSingleAttemptCpTime(lapIdx, cpIdx);
   } else if (cpDisplayMode == CpDisplayMode::DeltaBestLapCp) {
     // Actions: for DeltaBestLapCp, reference the best-ever split for this lap/CP combination from all attempts.
-    return g_state.GetBests().GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
+    return g_state.bests.GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
   } else if (cpDisplayMode == CpDisplayMode::DeltaBestAllTime) {
     // Actions: for DeltaBestAllTime, compare against the overall best CP split at this CP index, regardless of lap.
-    return g_state.GetBests().GetBestAnyCpTime(cpIdx);
+    return g_state.bests.GetBestAnyCpTime(cpIdx);
   }
   return 0;
 }

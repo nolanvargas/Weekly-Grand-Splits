@@ -2,13 +2,12 @@ void Update(float dt) {
 
   string mapId = GetMapId();
   if (g_state.currentMap != mapId) {            
-    g_state.set_currentMap("");
+    g_state.currentMap = "";
     ResetCommon();
 
-    if (g_state.get_currentMap() == "" || mapId == "") {      
-      // capture the new map ID and player start time, rebuild waypoint metadata, and hydrate in-memory history from disk.
+    if (g_state.currentMap == "" || mapId == "") {      
       g_state.playerStartTime = GetPlayerStartTime();
-      g_state.set_currentMap(mapId);
+      g_state.currentMap = mapId;
       UpdateWaypoints();
       LoadData();
     }
@@ -24,16 +23,17 @@ void Update(float dt) {
 
   if (g_state.resetData) {
     if (IsPlayerReady()) {      
-      // clear reset flag, archive the just-finished attempt, fully reset run state, fix start time, refresh waypoints for trivial CP maps, and persist the new state.
+      // clear reset flag, archive the just-finished attempt, fully reset run state
       g_state.resetData = false;
 
+      Attempt@ attemptForBests = null;
       if (g_state.hasPlayerRaced) { // first CP of lap 1 reached
-        ArchiveCurrentAttempt();
+        attemptForBests = ArchiveCurrentAttempt();
         g_state.currentAttemptId++;
         g_state.hasPlayerRaced = false; // reset flag until the next attempt crosses CP1
       }
 
-      ResetRace();
+      ResetRace(attemptForBests);
 
       g_state.playerStartTime = GetActualPlayerStartTime();
 
@@ -77,7 +77,6 @@ void Update(float dt) {
 #endif
         // mark the whole run as completed
         g_state.CompleteRun(raceTime);
-        CheckAndUpdatePB();
       }
     }
 

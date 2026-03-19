@@ -1,12 +1,3 @@
-// Aggregated "bests" used as reference baselines:
-// - Best single attempt (personal best attempt)
-// - Best individual lap within that attempt
-// - Best individual checkpoint per lap (synthetic Attempt)
-// - Best individual checkpoint across any lap (synthetic Lap)
-//
-// Time conventions:
-// - CP reference times use 0 to mean "unset / no reference".
-// - PB lap totals use -1 to mean "unset / no reference".
 class Bests {
   Attempt@ bestSingleAttempt;     // personal-best attempt (best single attempt)
   Lap@ bestSingleLap;             // best single lap at any lap number
@@ -35,7 +26,6 @@ class Bests {
   }
 
   bool IsLapComplete(Lap@ lap) const {
-    if (lap is null) return false;
     if (_numCps <= 0) return false;
     if (int(lap.CheckpointCount) < _numCps) return false;
     for (int cpIdx = 0; cpIdx < _numCps; cpIdx++) {
@@ -46,8 +36,7 @@ class Bests {
   }
 
   bool IsAttemptComplete(Attempt@ a) const {
-    if (a is null) return false;
-    if (_numLaps <= 0) return false;
+    if (_numLaps <= 0 ) return false;
     if (int(a.LapCount) < _numLaps) return false;
     for (int lapIdx = 0; lapIdx < _numLaps; lapIdx++) {
       Lap@ lap = a.GetLap(lapIdx);
@@ -61,15 +50,14 @@ class Bests {
     int total = 0;
     for (int lapIdx = 0; lapIdx < _numLaps; lapIdx++) {
       Lap@ lap = a.GetLap(lapIdx);
-      total += lap.get_LapTime();
+      total += lap.LapTime;
     }
     return total;
   }
 
-  // Computes all best references solely from archived attempt data.
+  // Computes all best references from archived attempt data.
   void ComputeFromHistory(RaceHistory@ history, int numLaps, int numCps) {
     Clear();
-    if (history is null) return;
 
     _numLaps = Math::Max(0, numLaps);
     _numCps = Math::Max(0, numCps);
@@ -80,7 +68,6 @@ class Bests {
     Attempt@ bestAttempt = null;
     for (uint ai = 0; ai < history.GetAttemptCount(); ai++) {
       Attempt@ a = history.GetAttemptByIndex(ai);
-      if (a is null) continue;
       int total = AttemptTotalIfComplete(a);
       if (total <= 0) continue;
       if (bestAttempt is null || bestTotal == 0 || total < bestTotal) {
@@ -95,11 +82,10 @@ class Bests {
     int bestLapTime = 0;
     for (uint ai = 0; ai < history.GetAttemptCount(); ai++) {
       Attempt@ a = history.GetAttemptByIndex(ai);
-      if (a is null) continue;
       for (int lapIdx = 0; lapIdx < _numLaps && lapIdx < int(a.LapCount); lapIdx++) {
         Lap@ lap = a.GetLap(lapIdx);
         if (!IsLapComplete(lap)) continue;
-        int lapTime = lap.get_LapTime();
+        int lapTime = lap.LapTime;
         if (lapTime <= 0) continue;
         if (bestLap is null || bestLapTime == 0 || lapTime < bestLapTime) {
           bestLapTime = lapTime;
@@ -115,10 +101,8 @@ class Bests {
       int bestTime = 0;
       for (uint ai = 0; ai < history.GetAttemptCount(); ai++) {
         Attempt@ a = history.GetAttemptByIndex(ai);
-        if (a is null) continue;
         for (int lapIdx = 0; lapIdx < _numLaps && lapIdx < int(a.LapCount); lapIdx++) {
           Lap@ lap = a.GetLap(lapIdx);
-          if (lap is null) continue;
           if (cpIdx >= int(lap.CheckpointCount)) continue;
           int cpTime = lap.GetCheckpointTime(cpIdx);
           if (cpTime <= 0) continue;
@@ -136,11 +120,10 @@ class Bests {
       int chosenLapTime = 0;
       for (uint ai = 0; ai < history.GetAttemptCount(); ai++) {
         Attempt@ a = history.GetAttemptByIndex(ai);
-        if (a is null) continue;
         if (lapIdx >= int(a.LapCount)) continue;
         Lap@ lap = a.GetLap(lapIdx);
         if (!IsLapComplete(lap)) continue;
-        int lapTime = lap.get_LapTime();
+        int lapTime = lap.LapTime;
         if (lapTime <= 0) continue;
         if (chosenLap is null || chosenLapTime == 0 || lapTime < chosenLapTime) {
           chosenLapTime = lapTime;
@@ -163,10 +146,8 @@ class Bests {
         int bestTime = 0;
         for (uint ai = 0; ai < history.GetAttemptCount(); ai++) {
           Attempt@ a = history.GetAttemptByIndex(ai);
-          if (a is null) continue;
           if (lapIdx >= int(a.LapCount)) continue;
           Lap@ lap = a.GetLap(lapIdx);
-          if (lap is null) continue;
           if (cpIdx >= int(lap.CheckpointCount)) continue;
           int cpTime = lap.GetCheckpointTime(cpIdx);
           if (cpTime <= 0) continue;
@@ -178,6 +159,110 @@ class Bests {
     @bestCpByCpLapIndex = cpByLapIndex;
   }
 
+  // Incrementally updates best caches from a single archived attempt.
+  // This is used so we do not recompute/adjust best references during an active run.
+  void UpdateFromAttempt(Attempt@ a, int numLaps, int numCps) {
+    int newNumLaps = Math::Max(0, numLaps);
+    int newNumCps = Math::Max(0, numCps);
+    if (newNumLaps <= 0 || newNumCps <= 0) {
+      Clear();
+      return;
+    }
+
+    // If config changes (e.g., map change without full reload), reset caches to avoid mixing shapes.
+    if (newNumLaps != _numLaps || newNumCps != _numCps) {
+      Clear();
+      _numLaps = newNumLaps;
+      _numCps = newNumCps;
+    }
+
+    // Ensure reference containers exist.
+    if (bestAnyCp is null || int(bestAnyCp.CheckpointCount) != _numCps) {
+      @bestAnyCp = Lap(0, _numCps);
+    }
+    if (bestLapByLapIndex is null) @bestLapByLapIndex = Attempt();
+    if (bestCpByCpLapIndex is null) @bestCpByCpLapIndex = Attempt();
+
+    // 1) bestSingleAttempt: best complete attempt by total lap sum.
+    int candidateTotal = AttemptTotalIfComplete(a);
+    int currentTotal = 0;
+    if (bestSingleAttempt !is null) currentTotal = AttemptTotalIfComplete(bestSingleAttempt);
+    if (candidateTotal > 0 && (bestSingleAttempt is null || currentTotal == 0 || candidateTotal < currentTotal)) {
+      @bestSingleAttempt = a;
+    }
+
+    // 2) bestSingleLap: best complete lap across all attempts.
+    int currentBestLapTime = 0;
+    if (bestSingleLap !is null && IsLapComplete(bestSingleLap)) currentBestLapTime = bestSingleLap.LapTime;
+
+    for (int lapIdx = 0; lapIdx < _numLaps && lapIdx < int(a.LapCount); lapIdx++) {
+      Lap@ lap = a.GetLap(lapIdx);
+      if (!IsLapComplete(lap)) continue;
+      int lapTime = lap.LapTime;
+      if (lapTime <= 0) continue;
+      if (bestSingleLap is null || currentBestLapTime == 0 || lapTime < currentBestLapTime) {
+        @bestSingleLap = lap;
+        currentBestLapTime = lapTime;
+      }
+    }
+
+    // 3) bestAnyCp: per-cp minimum across any lap/attempt.
+    for (int cpIdx = 0; cpIdx < _numCps; cpIdx++) {
+      // Keep the loop symmetric with ComputeFromHistory: scan all laps for this attempt.
+      for (int lapIdx = 0; lapIdx < _numLaps && lapIdx < int(a.LapCount); lapIdx++) {
+        Lap@ lap = a.GetLap(lapIdx);
+        if (cpIdx >= int(lap.CheckpointCount)) continue;
+        int cpTime = lap.GetCheckpointTime(cpIdx);
+        if (cpTime <= 0) continue;
+        int bestTime = bestAnyCp.GetCheckpointTime(cpIdx);
+        if (bestTime == 0 || cpTime < bestTime) bestAnyCp.SetCheckpointTime(cpIdx, cpTime);
+      }
+    }
+
+    // 4) bestLapByLapIndex: best complete lap at each lap index, then copy its whole checkpoint set.
+    for (int lapIdx = 0; lapIdx < _numLaps; lapIdx++) {
+      if (lapIdx >= int(a.LapCount)) continue;
+      Lap@ lap = a.GetLap(lapIdx);
+      if (!IsLapComplete(lap)) continue;
+
+      int candidateLapTime = lap.LapTime;
+      if (candidateLapTime <= 0) continue;
+
+      int currentLapTime = 0;
+      if (lapIdx < int(bestLapByLapIndex.LapCount)) {
+        Lap@ curLap = bestLapByLapIndex.GetLap(lapIdx);
+        if (IsLapComplete(curLap)) currentLapTime = curLap.LapTime;
+      }
+
+      if (currentLapTime == 0 || candidateLapTime < currentLapTime) {
+        for (int cpIdx = 0; cpIdx < _numCps; cpIdx++) {
+          int cpTime = lap.GetCheckpointTime(cpIdx);
+          if (cpTime > 0) bestLapByLapIndex.SetCheckpointTime(lapIdx, cpIdx, cpTime);
+        }
+      }
+    }
+
+    // 5) bestCpByCpLapIndex: independent per-slot minima for (lapIdx, cpIdx).
+    for (int lapIdx = 0; lapIdx < _numLaps && lapIdx < int(a.LapCount); lapIdx++) {
+      Lap@ lap = a.GetLap(lapIdx);
+      for (int cpIdx = 0; cpIdx < _numCps; cpIdx++) {
+        if (cpIdx >= int(lap.CheckpointCount)) continue;
+        int cpTime = lap.GetCheckpointTime(cpIdx);
+        if (cpTime <= 0) continue;
+
+        int currentBest = 0;
+        if (lapIdx < int(bestCpByCpLapIndex.LapCount)) {
+          Lap@ curLap = bestCpByCpLapIndex.GetLap(lapIdx);
+          if (cpIdx < int(curLap.CheckpointCount)) currentBest = curLap.GetCheckpointTime(cpIdx);
+        }
+
+        if (currentBest == 0 || cpTime < currentBest) {
+          bestCpByCpLapIndex.SetCheckpointTime(lapIdx, cpIdx, cpTime);
+        }
+      }
+    }
+  }
+
   // PB lap totals for DeltaPB comparison (return -1 when missing).
   int GetBestSingleAttemptLapTotal(int lapIdx) const {
     if (bestSingleAttempt is null) return -1;
@@ -185,7 +270,7 @@ class Bests {
     if (lapIdx >= int(bestSingleAttempt.LapCount)) return -1;
     Lap@ lap = bestSingleAttempt.GetLap(lapIdx);
     if (!IsLapComplete(lap)) return -1;
-    return lap.get_LapTime();
+    return lap.LapTime;
   }
 
   // Best lap totals by lap index (property 4). Return 0 when missing.
@@ -195,7 +280,7 @@ class Bests {
     if (lapIdx >= int(bestLapByLapIndex.LapCount)) return 0;
     Lap@ lap = bestLapByLapIndex.GetLap(lapIdx);
     if (!IsLapComplete(lap)) return 0;
-    return lap.get_LapTime();
+    return lap.LapTime;
   }
 
   // PB cp refs (return 0 when missing).
@@ -204,7 +289,6 @@ class Bests {
     if (lapIdx < 0 || lapIdx >= _numLaps) return 0;
     if (lapIdx >= int(bestSingleAttempt.LapCount)) return 0;
     Lap@ lap = bestSingleAttempt.GetLap(lapIdx);
-    if (lap is null) return 0;
     if (cpIdx < 0 || cpIdx >= int(lap.CheckpointCount)) return 0;
     int t = lap.GetCheckpointTime(cpIdx);
     return (t > 0) ? t : 0;
@@ -216,7 +300,6 @@ class Bests {
     if (lapIdx < 0 || lapIdx >= _numLaps) return 0;
     if (lapIdx >= int(bestCpByCpLapIndex.LapCount)) return 0;
     Lap@ lap = bestCpByCpLapIndex.GetLap(lapIdx);
-    if (lap is null) return 0;
     if (cpIdx < 0 || cpIdx >= int(lap.CheckpointCount)) return 0;
     int t = lap.GetCheckpointTime(cpIdx);
     return (t > 0) ? t : 0;

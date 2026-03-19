@@ -15,7 +15,7 @@ void Render() {
   StorageFile@ storage = g_storage;
   auto app = cast<CTrackMania>(GetApp());
 
-#if TMNEXT || MP4
+#if TMNEXT
   auto map = app.RootMap;
 #endif
 

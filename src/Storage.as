@@ -34,9 +34,8 @@ string MapJsonPath(const string&in mapId) {
 // Syncs g_state into g_storage, then serializes to JSON.
 Json::Value@ BuildStateJson() {
   g_storage.attempts = {};
-  RaceHistory@ hist = g_state.GetHistory();
-  for (uint ai = 0; ai < hist.GetAttemptCount(); ai++) {
-    Attempt@ src = hist.GetAttemptByIndex(ai);
+  for (uint ai = 0; ai < g_state.history.GetAttemptCount(); ai++) {
+    Attempt@ src = g_state.history.GetAttemptByIndex(ai);
     if (src is null) continue;
     StorageAttempt at;
     at.id = src.id;
@@ -45,19 +44,27 @@ Json::Value@ BuildStateJson() {
   }
 
   // in-progress attempt with -1 placeholders for unvisited CPs
-  bool hasCurrentData = g_state.currLapCpTimes.Length > 0 || g_state.currentLap > 0;
+  Attempt@ curAttempt = g_state.currentAttempt;
+  bool hasCurrentData = (curAttempt !is null && curAttempt.LapCount > 0) || g_state.currentLap > 0;
   if (hasCurrentData && !g_state.isFinished) {
     // Actions: when there is an in-progress attempt with at least one lap or CP split and the run is not finished, append a synthetic "current attempt" entry with -1 placeholders.
     StorageAttempt at;
     at.id = g_state.currentAttemptId;
 
-    for (int li = 0; li < g_state.currentLap && li < int(g_state.allLapCpTimes.Length); li++) {
-      at.laps.InsertLast(g_state.allLapCpTimes[li]);
+    array<array<int>> lapCp = (curAttempt is null) ? array<array<int>>() : curAttempt.ToLapCpArray();
+
+    // Append completed laps (variable checkpoint count, matching archived attempts).
+    for (int li = 0; li < g_state.currentLap && li < int(lapCp.Length); li++) {
+      at.laps.InsertLast(lapCp[li]);
     }
 
+    // Append current lap, padded with -1 for unvisited CPs.
     array<int> curLap;
-    for (uint ci = 0; ci < g_state.currLapCpTimes.Length; ci++) curLap.InsertLast(g_state.currLapCpTimes[ci]);
-    int remaining = g_state.numCps - int(g_state.currLapCpTimes.Length);
+    int curLapIdx = g_state.currentLap;
+    if (curAttempt !is null && curLapIdx >= 0 && curLapIdx < int(lapCp.Length)) {
+      for (uint ci = 0; ci < lapCp[curLapIdx].Length; ci++) curLap.InsertLast(lapCp[curLapIdx][ci]);
+    }
+    int remaining = g_state.numCps - int(curLap.Length);
     for (int pi = 0; pi < remaining; pi++) curLap.InsertLast(-1);
     at.laps.InsertLast(curLap);
 
@@ -77,17 +84,18 @@ void SaveData() {
   string mapId = GetMapId();
   // avoid writing to disk when there is no valid map ID or no checkpoints configured
   if (mapId == "" || g_state.numCps == 0) return;
-  RaceHistory@ hist = g_state.GetHistory();
-  if (hist.GetAttemptCount() == 0 && g_state.currLapCpTimes.Length == 0 && g_state.allLapCpTimes.Length == 0) return;
+  Attempt@ curAttempt = g_state.currentAttempt;
+  bool hasCurrent = (curAttempt !is null && curAttempt.LapCount > 0) || g_state.currentLap > 0;
+  if (g_state.history.GetAttemptCount() == 0 && !hasCurrent) return;
   // Safety: never write fewer archived attempts than what was loaded from disk.
-  if (int(hist.GetAttemptCount()) < g_minAttemptCount) return;
+  if (int(g_state.history.GetAttemptCount()) < g_minAttemptCount) return;
   Json::ToFile(MapJsonPath(mapId), BuildStateJson(), true);
 }
 
 // Resets all history/PB state.
 // Called from ResetCommon() on map change to start fresh for a new map.
 void InitEmptyState() {
-  g_state.GetHistory().Clear();
+  g_state.history.Clear();
   g_state.currentAttemptId = 1;
   g_state.bests.Clear();
   g_minAttemptCount = 0;
@@ -97,9 +105,8 @@ void InitEmptyState() {
 // Ensures newly loaded attempts don't clash with existing ids.
 int ComputeNextAttemptId() {
   int maxId = 0;
-  RaceHistory@ hist = g_state.GetHistory();
-  for (uint i = 0; i < hist.GetAttemptCount(); i++) {
-    Attempt@ at = hist.GetAttemptByIndex(i);
+  for (uint i = 0; i < g_state.history.GetAttemptCount(); i++) {
+    Attempt@ at = g_state.history.GetAttemptByIndex(i);
     if (at is null) continue;
     if (at.id > maxId) maxId = at.id;
   }
@@ -112,21 +119,21 @@ void PopulateStateFromJson(Json::Value@ root) {
   // deserialize the raw JSON
   g_storage.FromJson(root);
 
-  g_state.GetHistory().Clear();
+  g_state.history.Clear();
 
   // Copy each stored attempt into an Attempt instance
   for (uint attemptIndex = 0; attemptIndex < g_storage.attempts.Length; attemptIndex++) {
     StorageAttempt@ storageAttempt = g_storage.attempts[attemptIndex];
     int[] dummyTotals; // not used by RaceFromLapArrays
     Attempt@ attempt = RaceFromLapArrays(storageAttempt.id, storageAttempt.laps, dummyTotals);
-    g_state.GetHistory().AddAttempt(attempt);
+    g_state.history.AddAttempt(attempt);
   }
 
   // Ensure future attempts get an id that does not collide with anything we just loaded.
   g_state.currentAttemptId = ComputeNextAttemptId();
 
   // Derive best/reference baselines from the loaded attempts.
-  g_state.bests.ComputeFromHistory(g_state.GetHistory(), g_state.numLaps, g_state.numCps);
+  g_state.bests.ComputeFromHistory(g_state.history, g_state.numLaps, g_state.numCps);
 }
 
 // Entry point to load persisted data for the current map into g_state.
@@ -141,6 +148,6 @@ void LoadData() {
     Json::Value@ data = Json::FromFile(jsonPath);
     if (data is null) { InitEmptyState(); return; }
     PopulateStateFromJson(data);
-    g_minAttemptCount = int(g_state.GetHistory().GetAttemptCount());
+    g_minAttemptCount = int(g_state.history.GetAttemptCount());
   } else { InitEmptyState(); }
 }

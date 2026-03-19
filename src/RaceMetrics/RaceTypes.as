@@ -1,70 +1,38 @@
-// Shared race domain types: attempts, laps, and checkpoint splits.
-// These are lightweight wrappers around the underlying int arrays used for storage.
-
 class Checkpoint {
-  private int _index = -1; // 0-based CP index within the lap
-  private int _time = 0;   // time delta for this CP (ms)
+  int index = -1; // 0-based CP index within the lap
+  int time = 0;   // time delta for this CP (ms)
 
   Checkpoint() {}
 
   Checkpoint(int index, int time) {
-    set_index(index);
-    set_time(time);
+    this.index = index;
+    this.time = time;
   }
 
   Checkpoint(int index) {
-    set_index(index);
-  }
-
-  int get_index() const { return _index; }
-
-  void set_index(int v) {
-    if (v < 0) {
-      throw("Checkpoint.set_index: negative index not allowed (value=" + v + ")");
-    }
-    _index = v;
-  }
-
-  int get_time() const { return _time; }
-
-  void set_time(int v) {
-    if (v < 0) {
-      throw("Checkpoint.set_time: negative time not allowed (value=" + v + ")");
-    }
-    _time = v;
+    this.index = index;
   }
 }
 
 class Lap {
-  private int _index = 0; 
-  private array<Checkpoint@> checkpoints;
+  int index = 0;
+  array<Checkpoint@> checkpoints;
+  int LapTime = 0;            // sum of checkpoint times
+  uint CheckpointCount = 0;
 
-  Lap() {}
+  Lap() {
+    checkpoints = {};
+    LapTime = 0;
+    CheckpointCount = 0;
+  }
 
   Lap(int index, int cp_qty) {
-    set_index(index);
-    for (int i = 0; i < cp_qty; i++) {
-      Checkpoint@ cp = Checkpoint(i);
-      checkpoints.InsertLast(cp);
-    }
+    this.index = index < 0 ? 0 : index;
+    checkpoints = {};
+    LapTime = 0;
+    for (int i = 0; i < cp_qty; i++) checkpoints.InsertLast(Checkpoint(i));
+    CheckpointCount = uint(checkpoints.Length);
   }
-
-  int get_index() const { return _index; }
-  void set_index(int v) {
-    _index = v < 0 ? 0 : v;
-  }
-
-  int get_LapTime() const {
-    int total = 0;
-    for (uint i = 0; i < checkpoints.Length; i++) {
-      Checkpoint@ cp = checkpoints[i];
-      if (cp is null) continue;
-      total += cp.get_time();
-    }
-    return total;
-  }
-
-  uint get_CheckpointCount() const { return checkpoints.Length; }
 
   int GetCheckpointTime(int cpIndex) const {
     if (cpIndex < 0 || cpIndex >= int(checkpoints.Length)) {
@@ -74,7 +42,7 @@ class Lap {
     if (cp is null) {
       throw("GetCheckpointTime: checkpoint is null (index=" + cpIndex + ")");
     }
-    return cp.get_time();
+    return cp.time;
   }
 
   void SetCheckpointTime(int cpIndex, int time) {
@@ -86,47 +54,41 @@ class Lap {
       checkpoints.InsertLast(placeholder);
     }
     Checkpoint@ cp = checkpoints[cpIndex];
-    cp.set_time(time);
+    if (cp is null) {
+      throw("SetCheckpointTime: checkpoint is null (index=" + cpIndex + ")");
+    }
+    // Actions: update LapTime incrementally instead of recomputing the full sum each time.
+    int prev = cp.time;
+    cp.time = time;
+    LapTime += (time - prev);
+    CheckpointCount = uint(checkpoints.Length);
   }
 }
 
-// In-memory representation of a single race attempt.
 class Attempt {
-  private int _id = 0;
-  private array<Lap@> _laps;
+  int id = 0;
+  array<Lap@> laps;
+  uint LapCount = 0;
 
-  Attempt() {}
+  Attempt() {
+    laps = {};
+    LapCount = 0;
+  }
 
   Attempt(int id, int lap_qty) {
-    if (id < 0) {
-      throw("Attempt.set_id: negative id not allowed (value=" + id + ")");
-    }
-    set_id(id);
-    _laps.Resize(lap_qty);
-    for (int i = 0; i < lap_qty; i++) {
-      Lap@ lap = Lap(i, 0);
-      _laps.InsertLast(lap);
-    }
+    if (id < 0) throw("Attempt.ctor: negative id not allowed (value=" + id + ")");
+    this.id = id;
+    laps = {};
+    LapCount = 0;
+    for (int i = 0; i < lap_qty; i++) laps.InsertLast(Lap(i, 0));
+    LapCount = uint(laps.Length);
   }
-
-  int get_id() const { return _id; }
-  
-  void set_id(int v) {
-    if (v < 0) {
-      throw("Attempt.set_id: negative id not allowed (value=" + v + ")");
-    }
-    _id = v;
-  }
-
-  uint get_LapCount() const { return _laps.Length; }
-
-  array<Lap@>@ get_laps() { return _laps; }
 
   Lap@ GetLap(int lapIndex) const {
-    if (lapIndex < 0 || lapIndex >= int(_laps.Length)) {
-      throw("Attempt.GetLap: lap index out of range (index=" + lapIndex + ", count=" + _laps.Length + ")");
+    if (lapIndex < 0 || lapIndex >= int(laps.Length)) {
+      throw("Attempt.GetLap: lap index out of range (index=" + lapIndex + ", count=" + laps.Length + ")");
     }
-    Lap@ lap = _laps[lapIndex];
+    Lap@ lap = laps[lapIndex];
     if (lap is null) {
       throw("Attempt.GetLap: lap is null (index=" + lapIndex + ")");
     }
@@ -138,14 +100,14 @@ class Attempt {
       throw("Attempt.SetCheckpointTime: negative lap index not allowed (value=" + lapIndex + ")");
     }
     Lap@ lap;
-    if (lapIndex >= int(_laps.Length)) {
-      _laps.Resize(lapIndex + 1);
+    if (lapIndex >= int(laps.Length)) {
+      laps.Resize(lapIndex + 1);
+      LapCount = uint(laps.Length);
     }
-    @lap = _laps[lapIndex];
+    @lap = laps[lapIndex];
     if (lap is null) {
-      Lap@ newLap = Lap(lapIndex, 0);
-      @lap = newLap;
-      @_laps[lapIndex] = lap;
+      @lap = Lap(lapIndex, 0);
+      @laps[lapIndex] = lap;
     }
     lap.SetCheckpointTime(cpIndex, time);
   }
@@ -153,13 +115,13 @@ class Attempt {
   // Returns lap/cp data as a 2D structure: [lap][cp] = time
   array<array<int>> ToLapCpArray() const {
     array<array<int>> result;
-    for (uint li = 0; li < _laps.Length; li++) {
-      Lap@ lap = _laps[li];
+    for (uint li = 0; li < laps.Length; li++) {
+      Lap@ lap = laps[li];
       if (lap is null) {
         throw("Attempt.ToLapCpArray: lap is null (index=" + li + ")");
       }
       array<int> row;
-      uint cpCount = lap.get_CheckpointCount();
+      uint cpCount = lap.CheckpointCount;
       for (uint ci = 0; ci < cpCount; ci++) {
         row.InsertLast(lap.GetCheckpointTime(int(ci)));
       }
@@ -173,7 +135,7 @@ class Attempt {
 
 // Builds a Race from a [lap][cp] 2D array of CP deltas and an array of per-lap totals.
 // Note: lap totals are derived by `Lap.get_LapTime()` summing checkpoint times.
-Attempt@ RaceFromLapArrays(int attemptId, const array<array<int>> &in lapCpTimes, const int[] &in lapTotals) {
+Attempt@ RaceFromLapArrays(int attemptId, const array<array<int>> &in lapCpTimes) {
   Attempt@ race = Attempt();
   race.id = attemptId;
 
@@ -192,6 +154,8 @@ Attempt@ RaceFromLapArrays(int attemptId, const array<array<int>> &in lapCpTimes
 
     race.laps.InsertLast(lap);
   }
+  // Keep LapCount in sync when laps are inserted outside Attempt.SetCheckpointTime().
+  race.LapCount = uint(race.laps.Length);
 
   return race;
 }
@@ -203,7 +167,7 @@ array<array<int>> LapArraysFromRace(Attempt@ race) {
     Lap@ lap = race.laps[lapIndex];
     if (lap is null) continue;
     array<int> row;
-    uint cpCount = lap.get_CheckpointCount();
+    uint cpCount = lap.CheckpointCount;
     for (uint cpIndex = 0; cpIndex < cpCount; cpIndex++) {
       row.InsertLast(lap.GetCheckpointTime(int(cpIndex)));
     }

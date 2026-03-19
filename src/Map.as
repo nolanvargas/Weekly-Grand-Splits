@@ -1,5 +1,5 @@
 string GetMapName() {
-#if TMNEXT || MP4
+#if TMNEXT
   auto app = GetApp();
   if (app.RootMap is null) return "";
   return app.RootMap.MapName;
@@ -9,7 +9,7 @@ string GetMapName() {
 }
 
 string GetMapId() {
-#if TMNEXT || MP4
+#if TMNEXT
   auto app = GetApp();
   if (app.RootMap is null) return "";
   return app.RootMap.IdName;

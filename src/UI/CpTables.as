@@ -13,7 +13,7 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
     // 10 lap rows
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
-      array<array<int>> lapCp = g_state.GetCurrentAttemptLapCpTimes();
+      array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
       bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
       bool active    = isRacing && lapIdx == g_state.currentLap;
       // Actions: mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
@@ -21,7 +21,8 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
       if (completed || active) {
         // Actions: for completed or active laps, render each CP cell as either an absolute time or delta vs the chosen reference.
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
-        array<int>@ cpTimes = active ? g_state.currLapCpTimes : lapCp[lapIdx];
+        array<int> cpTimes;
+        if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
         for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
           UI::TableNextColumn();
           if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
@@ -57,14 +58,15 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
     for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
       UI::TableNextRow();
       UI::TableNextColumn(); UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
-      array<array<int>> lapCp = g_state.GetCurrentAttemptLapCpTimes();
+      array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
       for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
         UI::TableNextColumn();
         bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
         bool active    = isRacing && lapIdx == g_state.currentLap;
         if (!completed && !active) { UI::Text("-"); continue; }
         // Actions: if the lap has no stored CP data and is not currently active, show "-" for this CP position.
-        array<int>@ cpTimes = active ? g_state.currLapCpTimes : lapCp[lapIdx];
+      array<int> cpTimes;
+      if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
         if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
         // Actions: when the CP index is beyond the recorded splits for that lap, render "-" instead of a time.
         RenderCpCell(cpTimes[cpIdx], GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
@@ -82,7 +84,7 @@ void RenderCpTable() {
   // Actions: when the CP window visibility setting is off, skip constructing the window and exit early.
 
   auto app = cast<CTrackMania>(GetApp());
-#if TMNEXT || MP4
+#if TMNEXT
   auto map = app.RootMap;
 #endif
 
@@ -102,14 +104,14 @@ void RenderCpTable() {
   if (map is null || map.MapInfo.MapUid == "") return;
   // Actions: require a valid loaded map (with UID) before showing CP splits; otherwise exit without drawing anything.
 
-  // determine column count from data
+  // Determine column count from data.
+  array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
   int numCols = g_state.numCps;
-  for (uint lapIdx = 0; lapIdx < g_state.allLapCpTimes.Length; lapIdx++) {
-    if (int(g_state.allLapCpTimes[lapIdx].Length) > numCols) numCols = int(g_state.allLapCpTimes[lapIdx].Length);
-    // Actions: grow the CP column count to accommodate the longest completed lap's split list.
+  for (uint lapIdx = 0; lapIdx < lapCp.Length; lapIdx++) {
+    if (int(lapCp[lapIdx].Length) > numCols) numCols = int(lapCp[lapIdx].Length);
+    // Actions: grow the CP column count to accommodate the longest split list.
   }
-  if (int(g_state.currLapCpTimes.Length) > numCols) numCols = int(g_state.currLapCpTimes.Length);
-  // Actions: ensure numCols covers both historical and in-progress splits; even when there are
+  // Actions: ensure numCols covers historical splits; even when there are
   // no recorded CPs yet (numCols == 0), still show the empty window so the user can see that
   // the map is eligible and the CP overlay is active.
 
@@ -148,7 +150,7 @@ void RenderCpTable() {
   // Note: GetCpRefTime now reads DeltaBestAllTime directly from Bests, but we still pass an array for compatibility.
   array<int> bestEverCp;
   for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
-    bestEverCp.InsertLast(g_state.GetBests().GetBestAnyCpTime(cpIdx));
+    bestEverCp.InsertLast(g_state.bests.GetBestAnyCpTime(cpIdx));
   }
 
   bool deltaMode = cpDisplayMode != CpDisplayMode::Absolute;
