@@ -197,7 +197,7 @@ Attempt@ RaceFromLapArrays(int attemptId, const array<array<int>> &in lapCpTimes
 }
 
 // Extracts [lap][cp] CP times from a Race into a raw 2D array.
-array<array<int>> LapArraysFromRace(const Attempt &in race) {
+array<array<int>> LapArraysFromRace(Attempt@ race) {
   array<array<int>> result;
   for (uint lapIndex = 0; lapIndex < race.laps.Length; lapIndex++) {
     Lap@ lap = race.laps[lapIndex];

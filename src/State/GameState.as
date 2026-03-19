@@ -11,10 +11,6 @@ class GameState {
   // Transient run state.
   RunState run;
 
-  // Lap-level metrics for the current run and PB run.
-  LapTimeSeries lapTimes;       // current run lap totals
-  LapTimeSeries bestLapTimes;   // best per-lap times for PB
-
   // PB attempt splits and best-ever metrics across all attempts.
   array<array<int>> bestLapCpTimes; // [lap][cp] splits from the PB run
 
@@ -23,12 +19,14 @@ class GameState {
 
   // Attempt tracking.
   int currentAttemptId = 0;
-  Attempt@ currentAttempt;
+  Attempt@ currentAttempt;  // current run, populated per-CP via RecordCheckpoint
+  Attempt@ pbAttempt;       // snapshot of the run that set the session PB
 
   GameState() {
     config = RaceConfig();
     history = RaceHistory();
     bests = Bests();
+    @currentAttempt = Attempt();
   }
 
   RaceHistory@ GetHistory() {
@@ -120,23 +118,27 @@ class GameState {
 
   // Legacy lap array-style accessors backed by LapTimeSeries.
   int GetLapTime(int idx) const {
-    return lapTimes.Get(idx);
-  }
-  void SetLapTime(int idx, int time) {
-    lapTimes.Set(idx, time);
+    if (currentAttempt is null || idx < 0 || idx >= int(currentAttempt.LapCount)) return -1;
+    Lap@ lap = currentAttempt.GetLap(idx);
+    int n = config.get_NumCps();
+    if (n > 0 && int(lap.CheckpointCount) < n) return -1;
+    int t = lap.LapTime;
+    return (t > 0) ? t : -1;
   }
   void ResetLapTimes() {
-    lapTimes.Reset(-1);
+    @currentAttempt = Attempt();
   }
 
   int GetBestLapTime(int idx) const {
-    return bestLapTimes.Get(idx);
-  }
-  void SetBestLapTime(int idx, int time) {
-    bestLapTimes.Set(idx, time);
+    if (pbAttempt is null || idx < 0 || idx >= int(pbAttempt.LapCount)) return -1;
+    Lap@ lap = pbAttempt.GetLap(idx);
+    int n = config.get_NumCps();
+    if (n > 0 && int(lap.CheckpointCount) < n) return -1;
+    int t = lap.LapTime;
+    return (t > 0) ? t : -1;
   }
   void ResetBestLapTimes() {
-    bestLapTimes.Reset(-1);
+    @pbAttempt = null;
   }
 
   int GetBestAllTimeLapTime(int idx) const {
@@ -205,7 +207,6 @@ class GameState {
     int idx = run.currentLap;
     if (idx < 0 || idx >= MAX_LAPS) return;
     // Actions: guard against out-of-range lap indices so we do not write beyond the fixed-size lap arrays.
-    SetLapTime(idx, lapTime);
     if (GetBestAllTimeLapTime(idx) == 0 || lapTime < GetBestAllTimeLapTime(idx)) {
       // Actions: whenever this lap time beats the stored all-time best (or no best exists), update the best-total record for that lap.
       SetBestAllTimeLapTime(idx, lapTime);

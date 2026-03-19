@@ -67,6 +67,10 @@ Json::Value@ BuildStateJson() {
   return g_storage.ToJson();
 }
 
+// Minimum archived attempt count we must not go below when writing.
+// Set after each LoadData so we never overwrite disk data with fewer attempts.
+int g_minAttemptCount = 0;
+
 // Writes all state to JSON.
 // Guarded: won't write until there is a valid map and some runs/splits to store.
 void SaveData() {
@@ -75,6 +79,8 @@ void SaveData() {
   if (mapId == "" || g_state.numCps == 0) return;
   RaceHistory@ hist = g_state.GetHistory();
   if (hist.GetAttemptCount() == 0 && g_state.currLapCpTimes.Length == 0 && g_state.allLapCpTimes.Length == 0) return;
+  // Safety: never write fewer archived attempts than what was loaded from disk.
+  if (int(hist.GetAttemptCount()) < g_minAttemptCount) return;
   Json::ToFile(MapJsonPath(mapId), BuildStateJson(), true);
 }
 
@@ -84,6 +90,7 @@ void InitEmptyState() {
   g_state.GetHistory().Clear();
   g_state.currentAttemptId = 1;
   g_state.bests.Clear();
+  g_minAttemptCount = 0;
 }
 
 // Computes the next attempt id based on attempts already present in history.
@@ -134,5 +141,6 @@ void LoadData() {
     Json::Value@ data = Json::FromFile(jsonPath);
     if (data is null) { InitEmptyState(); return; }
     PopulateStateFromJson(data);
+    g_minAttemptCount = int(g_state.GetHistory().GetAttemptCount());
   } else { InitEmptyState(); }
 }

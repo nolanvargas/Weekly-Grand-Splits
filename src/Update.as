@@ -61,10 +61,10 @@ void Update(float dt) {
     g_state.RecordCheckpoint(cp, raceTime);
     if (raceTime <= 0 || raceTime - g_state.prevLapRaceTime <= 0) return;
 
-    if (g_state.isMultiLap && IsWaypointFinish(cp)) {
+    if (IsWaypointFinish(cp)) {
       // compute the lap delta from the previous lap start
       int deltaTime = raceTime - g_state.prevLapRaceTime;
-      // finalize lap metrics for the current lap
+      // finalize lap metrics for the current lap (single-lap and multi-lap alike)
       g_state.CompleteLap(deltaTime, raceTime);
     }
 
@@ -73,11 +73,11 @@ void Update(float dt) {
 #endif
       g_state.currentLap = g_state.currentLap + 1;
 #if TMNEXT
-      if (g_state.isMultiLap && g_state.currentLap == g_state.numLaps) { // check if this code works
-#endif        
+      if (g_state.currentLap == g_state.numLaps) {
+#endif
         // mark the whole run as completed
         g_state.CompleteRun(raceTime);
-        if (g_state.isMultiLap) CheckAndUpdatePB();
+        CheckAndUpdatePB();
       }
     }
 

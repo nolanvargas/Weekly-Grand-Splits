@@ -24,7 +24,7 @@ class RaceHistory {
     return _attempts[idx];
   }
 
-  void AddAttempt(const Attempt &in src) {
+  void AddAttempt(Attempt@ src) {
     // Deep copy the attempt so history is not mutated by callers.
     Attempt@ at = Attempt();
     at.id = src.id;

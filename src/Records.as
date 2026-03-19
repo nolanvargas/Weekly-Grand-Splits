@@ -41,8 +41,6 @@ void CreateOrUpdateBestTime(int time) {
   if (idx < 0 || idx >= MAX_LAPS) return;
   // Actions: if the derived lap index is invalid, bail out without writing to best-time structures.
 
-  g_state.SetLapTime(idx, time);
-
   if (g_state.GetBestAllTimeLapTime(idx) == 0 || time < g_state.GetBestAllTimeLapTime(idx)) {
     // Actions: when there is no prior best or this time is faster, update the stored all-time best for this lap and immediately persist to disk.
     g_state.SetBestAllTimeLapTime(idx, time);
@@ -70,10 +68,8 @@ void CheckAndUpdatePB() {
   }
 
   if (!hasPB || total < pbTotal) {
-    // Actions: when there is no existing PB or this total run is faster, copy current lap times and CP splits into PB storage and persist the new record.
-    for (int i = 0; i < g_state.numLaps; i++) {
-      g_state.SetBestLapTime(i, g_state.GetLapTime(i));
-    }
+    // Actions: when there is no existing PB or this total run is faster, snapshot the current attempt as the PB and persist the new record.
+    @g_state.pbAttempt = g_state.currentAttempt;
     g_state.bestLapCpTimes = g_state.allLapCpTimes;
     g_state.GetHistory().set_PbAttemptId(g_state.currentAttemptId);
     SaveData();
