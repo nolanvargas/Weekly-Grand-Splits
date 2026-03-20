@@ -21,7 +21,31 @@ class GameState {
   int lastCP = 0;               // Index of the last checkpoint the player triggered.
 
   Attempt@ currentAttempt;
+  Attempt@ staleAttempt;   // holds the last attempt for faded display until the first new CP
   int currentAttemptId = 0;
+
+  // True when displaying old/stale data: player is restarting with data from a previous run,
+  // but no new checkpoint has arrived yet to replace it.
+  bool IsStale() {
+    return (resetData && hasPlayerRaced) || staleAttempt !is null;
+  }
+
+  // Returns the best attempt to read display data from: staleAttempt during the stale phase,
+  // currentAttempt otherwise.
+  Attempt@ GetDisplayAttempt() {
+    return staleAttempt !is null ? staleAttempt : currentAttempt;
+  }
+
+  // Like GetLapTime but falls back to staleAttempt when present.
+  int GetDisplayLapTime(int idx) const {
+    Attempt@ src = staleAttempt !is null ? staleAttempt : currentAttempt;
+    if (src is null || idx < 0 || idx >= int(src.LapCount)) return -1;
+    Lap@ lap = src.GetLap(idx);
+    int n = numCps;
+    if (n > 0 && int(lap.CheckpointCount) < n) return -1;
+    int t = lap.LapTime;
+    return (t > 0) ? t : -1;
+  }
 
   // Constructor
   GameState() {
@@ -69,7 +93,9 @@ class GameState {
 
         // Actions: once the player records the first checkpoint of lap 1,
         // flag that this attempt is now valid and should be archived when it finishes.
-        if (lapIdx == 0 && cpIdx == 0) hasPlayerRaced = true;
+        if (lapIdx == 0 && cpIdx == 0) {
+          hasPlayerRaced = true;
+        }
       }
     }
     lastCpTime = raceTime;

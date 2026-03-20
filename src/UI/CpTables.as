@@ -12,9 +12,9 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
     // 10 lap rows
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
-      array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
+      array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
       // mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
-      bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
+      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && int(lapCp.Length) > lapIdx;
       bool active    = isRacing && lapIdx == g_state.currentLap;
 
       if (completed || active) {
@@ -55,10 +55,10 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
     for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
       UI::TableNextRow();
       UI::TableNextColumn(); UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
-      array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
+      array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
       for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
         UI::TableNextColumn();
-        bool completed = lapIdx < g_state.currentLap && int(lapCp.Length) > lapIdx;
+        bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && int(lapCp.Length) > lapIdx;
         bool active    = isRacing && lapIdx == g_state.currentLap;
         if (!completed && !active) { UI::Text("-"); continue; }
       array<int> cpTimes;
@@ -94,7 +94,7 @@ void RenderCpTable() {
   if (map is null || map.MapInfo.MapUid == "") return;
 
   // Determine column count from data.
-  array<array<int>> lapCp = g_state.currentAttempt.ToLapCpArray();
+  array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
   int numCols = g_state.numCps;
   for (uint lapIdx = 0; lapIdx < lapCp.Length; lapIdx++) {
     // grow the CP column count to accommodate the longest split list.
@@ -117,12 +117,13 @@ void RenderCpTable() {
     windowFlags |= UI::WindowFlags::NoInputs;
   }
 
+  bool isStale = g_state.IsStale();
   g_fmtThousandths = cpUseThousandths;
   UI::PushFont(cpFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : cpFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
   UI::PushFontSize(cpFontSize);
   if (cpGradientEnabled && g_cpWinSize.x > 0) DrawGradientBg(g_cpWinPos, g_cpWinSize, cpGradientRadial, cpGradientColor1, cpGradientColor2);
   UI::PushStyleColor(UI::Col::WindowBg, cpGradientEnabled ? vec4(0, 0, 0, 0) : cpWindowBgColor);
-  UI::PushStyleColor(UI::Col::Text, cpTextColor);
+  UI::PushStyleColor(UI::Col::Text, isStale ? vec4(cpTextColor.x, cpTextColor.y, cpTextColor.z, cpTextColor.w * 0.45f) : cpTextColor);
   UI::Begin("CpTimes", windowFlags);
 
   if (!cpLockPosition) {
@@ -131,7 +132,7 @@ void RenderCpTable() {
   g_cpWinPos  = UI::GetWindowPos();
   g_cpWinSize = UI::GetWindowSize();
 
-  bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished;
+  bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished && !g_state.IsStale();
   // precompute best-ever per CP position across all laps (mode 3).
   // Note: GetCpRefTime now reads DeltaBestAllTime directly from Bests, but we still pass an array for compatibility.
   array<int> bestEverCp;

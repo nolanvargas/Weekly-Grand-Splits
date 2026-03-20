@@ -78,6 +78,12 @@
         <mxCell id="0_VCYnxCMihO1faVK7p4-9" value="ArchiveCurrentAttempt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="530" y="250" width="135" height="20" as="geometry" />
         </mxCell>
+        <mxCell id="arc_sc_edge_1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="0_VCYnxCMihO1faVK7p4-1" target="arc_sc_node_1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arc_sc_node_1" value="ArchiveCurrentRun" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
+          <mxGeometry x="530" y="220" width="135" height="20" as="geometry" />
+        </mxCell>
         <mxCell id="0_VCYnxCMihO1faVK7p4-12" value="ResetRace" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="530" y="280" width="90" height="20" as="geometry" />
         </mxCell>

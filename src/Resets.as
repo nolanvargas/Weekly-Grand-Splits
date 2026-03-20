@@ -3,7 +3,7 @@ void ResetCommon() {
   g_state.waitForCarReset = true;
   ResetRace(null);
   g_state.bests.Clear();
-
+  @g_state.staleAttempt = null;
   g_state.hasPlayerRaced = false;
 }
 

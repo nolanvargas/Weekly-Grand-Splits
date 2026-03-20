@@ -17,6 +17,10 @@ enum CpDisplayMode {
   DeltaBestAllTime
 }
 
+void Heading(const string &in label) {
+    UI::SeparatorText(label);
+}
+
 // --- Lap Window ---
 
 [Setting category="Lap Window" name="Visible"]
@@ -40,23 +44,32 @@ int lapFontSize = 16;
 [Setting category="Lap Window" name="Font style"]
 FontStyle lapFontStyle = FontStyle::Default;
 
-[Setting category="Lap Window" name="Background color" color]
+[Setting hidden]
 vec4 lapWindowBgColor = vec4(0.06f, 0.06f, 0.06f, 0.70f);
 
-[Setting category="Lap Window" name="Text color" color]
+[Setting hidden]
 vec4 lapTextColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-[Setting category="Lap Window" name="Gradient background"]
+[Setting hidden]
 bool lapGradientEnabled = false;
 
-[Setting category="Lap Window" name="Gradient type: radial (off = linear top-to-bottom)"]
+[Setting hidden]
 bool lapGradientRadial = false;
 
-[Setting category="Lap Window" name="Gradient color 1 (top / inner)" color]
+[Setting hidden]
 vec4 lapGradientColor1 = vec4(0.06f, 0.06f, 0.06f, 0.85f);
 
-[Setting category="Lap Window" name="Gradient color 2 (bottom / outer)" color]
+[Setting hidden]
 vec4 lapGradientColor2 = vec4(0.15f, 0.15f, 0.25f, 0.55f);
+
+[Setting category="Lap Window" name="Lap column width" min=8 max=120]
+int styleColWidthLap = 32;
+
+[Setting category="Lap Window" name="+/- column width" min=8 max=200]
+int styleColWidthDelta = 72;
+
+[Setting category="Lap Window" name="Time column width" min=8 max=200]
+int styleColWidthTime = 72;
 
 // --- CP Window ---
 
@@ -84,40 +97,71 @@ int cpFontSize = 16;
 [Setting category="CP Window" name="Font style"]
 FontStyle cpFontStyle = FontStyle::Default;
 
-[Setting category="CP Window" name="Background color" color]
+[Setting hidden]
 vec4 cpWindowBgColor = vec4(0.06f, 0.06f, 0.06f, 0.70f);
 
-[Setting category="CP Window" name="Text color" color]
+[Setting hidden]
 vec4 cpTextColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-[Setting category="CP Window" name="Gradient background"]
+[Setting hidden]
 bool cpGradientEnabled = false;
 
-[Setting category="CP Window" name="Radial"]
+[Setting hidden]
 bool cpGradientRadial = false;
 
-[Setting category="CP Window" name="Gradient color 1 (top / inner)" color]
+[Setting hidden]
 vec4 cpGradientColor1 = vec4(0.06f, 0.06f, 0.06f, 0.85f);
 
-[Setting category="CP Window" name="Gradient color 2 (bottom / outer)" color]
+[Setting hidden]
 vec4 cpGradientColor2 = vec4(0.15f, 0.15f, 0.25f, 0.55f);
 
-// --- Advanced style (table column min-widths, pixels) ---
-
-[Setting category="Advanced style" name="Lap table: Lap column" min=8 max=120]
-int styleColWidthLap = 32;
-
-[Setting category="Advanced style" name="Lap table: +/- column" min=8 max=200]
-int styleColWidthDelta = 72;
-
-[Setting category="Advanced style" name="Lap table: Time column" min=8 max=200]
-int styleColWidthTime = 72;
-
-[Setting category="Advanced style" name="CP table: Lap column" min=8 max=80]
+[Setting category="CP Window" name="Lap column width" min=8 max=80]
 int styleColWidthCpLap = 16;
 
-[Setting category="Advanced style" name="CP table: split column (absolute)" min=16 max=200]
+[Setting category="CP Window" name="Split column width (absolute)" min=16 max=200]
 int styleColWidthCpAbs = 36;
 
-[Setting category="Advanced style" name="CP table: split column (delta)" min=16 max=200]
+[Setting category="CP Window" name="Split column width (delta)" min=16 max=200]
 int styleColWidthCpDelta = 52;
+
+// --- Debug ---
+
+[Setting category="Debug" name="Print race events to log"]
+bool debugPrintEvents = false;
+
+[Setting category="Debug" name="Show live game state window"]
+bool debugShowStateWindow = false;
+
+[SettingsTab name="Lap Window Colors" icon="Palette"]
+void S_RenderLapColorsTab() {
+    Heading("Background");
+    lapWindowBgColor = UI::InputColor4("Background color", lapWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+
+    Heading("Text");
+    lapTextColor = UI::InputColor4("Text color", lapTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+
+    Heading("Gradient");
+    lapGradientEnabled = UI::Checkbox("Enable gradient background", lapGradientEnabled);
+    UI::BeginDisabled(!lapGradientEnabled);
+    lapGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", lapGradientRadial);
+    lapGradientColor1 = UI::InputColor4("Color 1 (top / inner)", lapGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    lapGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", lapGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    UI::EndDisabled();
+}
+
+[SettingsTab name="CP Window Colors" icon="Palette"]
+void S_RenderCpColorsTab() {
+    Heading("Background");
+    cpWindowBgColor = UI::InputColor4("Background color", cpWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+
+    Heading("Text");
+    cpTextColor = UI::InputColor4("Text color", cpTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+
+    Heading("Gradient");
+    cpGradientEnabled = UI::Checkbox("Enable gradient background", cpGradientEnabled);
+    UI::BeginDisabled(!cpGradientEnabled);
+    cpGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", cpGradientRadial);
+    cpGradientColor1 = UI::InputColor4("Color 1 (top / inner)", cpGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    cpGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", cpGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    UI::EndDisabled();
+}

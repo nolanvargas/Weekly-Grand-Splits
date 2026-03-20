@@ -10,7 +10,7 @@ Attempt@ ArchiveCurrentAttempt() {
   if (completedLapsCount <= 0) return null;
 
   Attempt@ srcAttempt = g_state.currentAttempt;
-  if (srcAttempt.LapCount <= 0) return null;
+  if (srcAttempt is null || srcAttempt.LapCount <= 0) return null;
 
   // Build an Attempt that includes ONLY completed laps.
   Attempt@ attempt = Attempt();
@@ -25,7 +25,15 @@ Attempt@ ArchiveCurrentAttempt() {
     }
   }
 
-  g_state.history.AddAttempt(attempt);
+  g_state.history.UpsertAttempt(attempt);
   // Note: best references are updated at the next ResetRace() boundary (not during the run).
   return attempt;
+}
+
+// Upserts the full current-run state (including in-progress lap) into history.
+// Called at every checkpoint so mid-run data survives a crash or reload.
+void ArchiveCurrentRun() {
+  Attempt@ src = g_state.currentAttempt;
+  if (src is null || src.LapCount <= 0) return;
+  g_state.history.UpsertAttempt(src);
 }

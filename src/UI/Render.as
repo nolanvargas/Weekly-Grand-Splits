@@ -17,56 +17,56 @@ void Render() {
 
   if (!g_state.isMultiLap) {return;}
 
-  if (lapHideWithIFace) {
-    auto playground = app.CurrentPlayground;
-    if (playground is null || playground.Interface is null ||
-        !UI::IsGameUIVisible()) {
-      return;
+  bool lapHideByIFace = lapHideWithIFace && (
+    app.CurrentPlayground is null || app.CurrentPlayground.Interface is null ||
+    !UI::IsGameUIVisible()
+  );
+
+  bool showLapWindow = windowVisible && map !is null && map.MapInfo.MapUid != "" && !lapHideByIFace;
+
+  if (showLapWindow) {
+    UI::SetNextWindowPos(int(anchor.x), int(anchor.y), lapLockPosition ? UI::Cond::Always : UI::Cond::FirstUseEver);
+
+    int windowFlags =
+        UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
+        UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
+    if (!UI::IsOverlayShown()) {
+      windowFlags |= UI::WindowFlags::NoInputs;
     }
-  }
 
-  if (!windowVisible || map is null || map.MapInfo.MapUid == "") {
-    return;
-  }
-  UI::SetNextWindowPos(int(anchor.x), int(anchor.y), lapLockPosition ? UI::Cond::Always : UI::Cond::FirstUseEver);
+    g_fmtThousandths = lapUseThousandths;
+    UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
+    UI::PushFontSize(lapFontSize);
+    if (lapGradientEnabled && g_lapWinSize.x > 0) DrawGradientBg(g_lapWinPos, g_lapWinSize, lapGradientRadial, lapGradientColor1, lapGradientColor2);
+    bool isStale = g_state.IsStale();
+    UI::PushStyleColor(UI::Col::WindowBg, lapGradientEnabled ? vec4(0, 0, 0, 0) : lapWindowBgColor);
+    UI::PushStyleColor(UI::Col::Text, isStale ? vec4(lapTextColor.x, lapTextColor.y, lapTextColor.z, lapTextColor.w * 0.45f) : lapTextColor);
+    UI::Begin("LapTimes", windowFlags);
 
-  int windowFlags =
-      UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
-      UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
-  if (!UI::IsOverlayShown()) {
-    windowFlags |= UI::WindowFlags::NoInputs;
-  }
+    if (!lapLockPosition) {
+      anchor = UI::GetWindowPos();
+    }
+    g_lapWinPos  = UI::GetWindowPos();
+    g_lapWinSize = UI::GetWindowSize();
 
-  g_fmtThousandths = lapUseThousandths;
-  UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
-  UI::PushFontSize(lapFontSize);
-  if (lapGradientEnabled && g_lapWinSize.x > 0) DrawGradientBg(g_lapWinPos, g_lapWinSize, lapGradientRadial, lapGradientColor1, lapGradientColor2);
-  UI::PushStyleColor(UI::Col::WindowBg, lapGradientEnabled ? vec4(0, 0, 0, 0) : lapWindowBgColor);
-  UI::PushStyleColor(UI::Col::Text, lapTextColor);
-  UI::Begin("LapTimes", windowFlags);
+    bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished && !isStale;
+    int liveTime = 0;
+    if (isRacing) {
+      // while a run is active, compute a live lap time based on current race time minus the previous lap's finish.
+      liveTime = GetCurrentPlayerRaceTime() - g_state.prevLapRaceTime;
+      if (liveTime < 0) liveTime = 0;
+    }
 
-  if (!lapLockPosition) {
-    anchor = UI::GetWindowPos();
-  }
-  g_lapWinPos  = UI::GetWindowPos();
-  g_lapWinSize = UI::GetWindowSize();
+    if (lapTableTransposed) RenderLapTableTransposed(isRacing, liveTime);
+    else                    RenderLapTableNormal(isRacing, liveTime);
 
-  bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished;
-  int liveTime = 0;
-  if (isRacing) {
-    // while a run is active, compute a live lap time based on current race time minus the previous lap's finish.
-    liveTime = GetCurrentPlayerRaceTime() - g_state.prevLapRaceTime;
-    if (liveTime < 0) liveTime = 0;
-  }
-
-  if (lapTableTransposed) RenderLapTableTransposed(isRacing, liveTime);
-  else                    RenderLapTableNormal(isRacing, liveTime);
-
-  UI::End();
-  UI::PopStyleColor(2);
-  UI::PopFontSize();
-  UI::PopFont();
+    UI::End();
+    UI::PopStyleColor(2);
+    UI::PopFontSize();
+    UI::PopFont();
+  } // if (showLapWindow)
 
   RenderCpTable();
+  RenderDebugState();
 }
 

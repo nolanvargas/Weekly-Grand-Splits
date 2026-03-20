@@ -9,22 +9,23 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
 
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
-      bool completed = g_state.GetLapTime(lapIdx) != -1;
+      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1;
       bool active    = isRacing && (lapIdx == g_state.currentLap);
 
       if (completed) {
         // show final time for a completed lap plus its delta vs PB, highlighting golds where the time beats the all-time best.
+        int lapTime   = g_state.GetDisplayLapTime(lapIdx);
         bool hasBest = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx) != -1;
         int bestLap   = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
-        int delta     = hasBest ? (g_state.GetLapTime(lapIdx) - bestLap) : 0;
+        int delta     = hasBest ? (lapTime - bestLap) : 0;
         int bestAll   = g_state.bests.GetBestLapTotalByLapIndex(lapIdx);
-        bool isGold  = bestAll > 0 && g_state.GetLapTime(lapIdx) <= bestAll;
+        bool isGold  = bestAll > 0 && lapTime <= bestAll;
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
         UI::PushStyleColor(UI::Col::Text, GetLapDeltaColor(delta, hasBest));
         UI::TableNextColumn(); UI::Text(hasBest ? FormatDelta(delta) : "-");
         UI::PopStyleColor();
         if (isGold) UI::PushStyleColor(UI::Col::Text, COLOR_GOLD);
-        UI::TableNextColumn(); UI::Text(FormatTenth(g_state.GetLapTime(lapIdx)));
+        UI::TableNextColumn(); UI::Text(FormatTenth(lapTime));
         if (isGold) UI::PopStyleColor();
 
       } else if (active) {
@@ -66,12 +67,13 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
     bool hasCompletedLap = false;
     bool allCompletedHaveBest = true;
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
-      if (g_state.GetLapTime(lapIdx) != -1) {
+      int lapTime = g_state.GetDisplayLapTime(lapIdx);
+      if (lapTime != -1) {
         // accumulate total run time only for laps that have been completed.
-        totalRun += g_state.GetLapTime(lapIdx);
+        totalRun += lapTime;
         hasCompletedLap = true;
         int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
-      if (bestLap != -1) bestForCompleted += bestLap;
+        if (bestLap != -1) bestForCompleted += bestLap;
         else allCompletedHaveBest = false;
         // if any completed lap lacks a PB, mark that we cannot compute a meaningful total delta.
       }
@@ -98,9 +100,10 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
   int totalRun = 0, bestForCompleted = 0;
   bool hasCompletedLap = false, allCompletedHaveBest = true;
   for (int i = 0; i < MAX_LAPS; i++) {
-    if (g_state.GetLapTime(i) != -1) {
+    int lapTime = g_state.GetDisplayLapTime(i);
+    if (lapTime != -1) {
       // for each completed lap, add its time to the total and, when available, its PB to the comparison baseline.
-      totalRun += g_state.GetLapTime(i); hasCompletedLap = true;
+      totalRun += lapTime; hasCompletedLap = true;
       int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(i);
       if (bestLap != -1) bestForCompleted += bestLap;
       else allCompletedHaveBest = false;
@@ -126,12 +129,13 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
     UI::TableNextColumn(); UI::Text("+/-");
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextColumn();
-      bool completed = g_state.GetLapTime(lapIdx) != -1;
+      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1;
       bool active    = isRacing && (lapIdx == g_state.currentLap);
       if (completed) {
+        int lapTime  = g_state.GetDisplayLapTime(lapIdx);
         int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
         bool hasBest = bestLap != -1;
-        int delta    = hasBest ? (g_state.GetLapTime(lapIdx) - bestLap) : 0;
+        int delta    = hasBest ? (lapTime - bestLap) : 0;
         UI::PushStyleColor(UI::Col::Text, GetLapDeltaColor(delta, hasBest));
         UI::Text(hasBest ? FormatDelta(delta) : "-");
         UI::PopStyleColor();
@@ -161,13 +165,14 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
     UI::TableNextColumn(); UI::Text("Time");
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextColumn();
-      bool completed = g_state.GetLapTime(lapIdx) != -1;
+      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1;
       bool active    = isRacing && (lapIdx == g_state.currentLap);
       if (completed) {
+        int lapTime  = g_state.GetDisplayLapTime(lapIdx);
         int bestAll = g_state.bests.GetBestLapTotalByLapIndex(lapIdx);
-        bool isGold = bestAll > 0 && g_state.GetLapTime(lapIdx) <= bestAll;
+        bool isGold = bestAll > 0 && lapTime <= bestAll;
         if (isGold) UI::PushStyleColor(UI::Col::Text, COLOR_GOLD);
-        UI::Text(FormatTenth(g_state.GetLapTime(lapIdx)));
+        UI::Text(FormatTenth(lapTime));
         if (isGold) UI::PopStyleColor();
       } else if (active) {
         UI::Text(FormatTenth(liveTime));

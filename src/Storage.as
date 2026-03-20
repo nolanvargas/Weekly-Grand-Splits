@@ -43,34 +43,6 @@ Json::Value@ BuildStateJson() {
     g_storage.attempts.InsertLast(at);
   }
 
-  // in-progress attempt with -1 placeholders for unvisited CPs
-  Attempt@ curAttempt = g_state.currentAttempt;
-  bool hasCurrentData = (curAttempt !is null && curAttempt.LapCount > 0) || g_state.currentLap > 0;
-  if (hasCurrentData && !g_state.isFinished) {
-    // Actions: when there is an in-progress attempt with at least one lap or CP split and the run is not finished, append a synthetic "current attempt" entry with -1 placeholders.
-    StorageAttempt at;
-    at.id = g_state.currentAttemptId;
-
-    array<array<int>> lapCp = (curAttempt is null) ? array<array<int>>() : curAttempt.ToLapCpArray();
-
-    // Append completed laps (variable checkpoint count, matching archived attempts).
-    for (int li = 0; li < g_state.currentLap && li < int(lapCp.Length); li++) {
-      at.laps.InsertLast(lapCp[li]);
-    }
-
-    // Append current lap, padded with -1 for unvisited CPs.
-    array<int> curLap;
-    int curLapIdx = g_state.currentLap;
-    if (curAttempt !is null && curLapIdx >= 0 && curLapIdx < int(lapCp.Length)) {
-      for (uint ci = 0; ci < lapCp[curLapIdx].Length; ci++) curLap.InsertLast(lapCp[curLapIdx][ci]);
-    }
-    int remaining = g_state.numCps - int(curLap.Length);
-    for (int pi = 0; pi < remaining; pi++) curLap.InsertLast(-1);
-    at.laps.InsertLast(curLap);
-
-    g_storage.attempts.InsertLast(at);
-  }
-
   return g_storage.ToJson();
 }
 
@@ -84,9 +56,7 @@ void SaveData() {
   string mapId = GetMapId();
   // avoid writing to disk when there is no valid map ID or no checkpoints configured
   if (mapId == "" || g_state.numCps == 0) return;
-  Attempt@ curAttempt = g_state.currentAttempt;
-  bool hasCurrent = (curAttempt !is null && curAttempt.LapCount > 0) || g_state.currentLap > 0;
-  if (g_state.history.GetAttemptCount() == 0 && !hasCurrent) return;
+  if (g_state.history.GetAttemptCount() == 0) return;
   // Safety: never write fewer archived attempts than what was loaded from disk.
   if (int(g_state.history.GetAttemptCount()) < g_minAttemptCount) return;
   Json::ToFile(MapJsonPath(mapId), BuildStateJson(), true);
@@ -98,6 +68,7 @@ void InitEmptyState() {
   g_state.history.Clear();
   g_state.currentAttemptId = 1;
   g_state.bests.Clear();
+  @g_state.staleAttempt = null;
   g_minAttemptCount = 0;
 }
 
@@ -124,8 +95,7 @@ void PopulateStateFromJson(Json::Value@ root) {
   // Copy each stored attempt into an Attempt instance
   for (uint attemptIndex = 0; attemptIndex < g_storage.attempts.Length; attemptIndex++) {
     StorageAttempt@ storageAttempt = g_storage.attempts[attemptIndex];
-    int[] dummyTotals; // not used by RaceFromLapArrays
-    Attempt@ attempt = RaceFromLapArrays(storageAttempt.id, storageAttempt.laps, dummyTotals);
+    Attempt@ attempt = RaceFromLapArrays(storageAttempt.id, storageAttempt.laps);
     g_state.history.AddAttempt(attempt);
   }
 
