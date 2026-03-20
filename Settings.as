@@ -129,8 +129,30 @@ int styleColWidthCpDelta = 52;
 [Setting category="Debug" name="Print race events to log"]
 bool debugPrintEvents = false;
 
+[Setting category="Debug" name="Dry-run player events (hooks print only; no persistence or metrics)"]
+bool debugPlayerEventsDryRun = false;
+
+string g_lastPrintOnce = "";
+void PrintOnce(const string&in msg) {
+  if (!debugPrintEvents || msg == g_lastPrintOnce) return;
+  g_lastPrintOnce = msg;
+  print(msg);
+}
+
+// Player event hooks: when dry-run is on, always print (no dedupe) and skip side effects in GameState.
+void HookEventPrint(const string&in msg) {
+  if (debugPlayerEventsDryRun) {
+    print(msg);
+    return;
+  }
+  PrintOnce(msg);
+}
+
 [Setting category="Debug" name="Show live game state window"]
 bool debugShowStateWindow = false;
+
+[Setting category="Debug" name="Notify ComputeFromHistory duration (ms)"]
+bool debugNotifyComputeFromHistory = false;
 
 [SettingsTab name="Lap Window Colors" icon="Palette"]
 void S_RenderLapColorsTab() {

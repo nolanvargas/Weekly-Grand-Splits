@@ -1,4 +1,3 @@
-
 // Snapshots the current run's complete laps into the historical archive
 // before the run is cleared. Must be called before ResetRace().
 // A run is considered a valid attempt once the player has reached
@@ -10,18 +9,18 @@ Attempt@ ArchiveCurrentAttempt() {
   if (completedLapsCount <= 0) return null;
 
   Attempt@ srcAttempt = g_state.currentAttempt;
-  if (srcAttempt is null || srcAttempt.LapCount <= 0) return null;
+  if (srcAttempt is null || srcAttempt.laps.Length <= 0) return null;
 
   // Build an Attempt that includes ONLY completed laps.
   Attempt@ attempt = Attempt();
-  attempt.id = g_state.currentAttemptId;
+  attempt.attemptId = g_state.currentAttemptId;
 
-  for (int lapIdx = 0; lapIdx < completedLapsCount && lapIdx < int(srcAttempt.LapCount); lapIdx++) {
+  for (int lapIdx = 0; lapIdx < completedLapsCount && lapIdx < int(srcAttempt.laps.Length); lapIdx++) {
     Lap@ lap = srcAttempt.GetLap(lapIdx);
-    uint cpCount = lap.CheckpointCount;
+    uint cpCount = lap.checkpoints.Length;
     for (uint cpIdx = 0; cpIdx < cpCount; cpIdx++) {
-      int t = lap.GetCheckpointTime(int(cpIdx));
-      if (t > 0) attempt.SetCheckpointTime(lapIdx, int(cpIdx), t);
+      int checkpointTimeMs = lap.GetCheckpointTime(int(cpIdx));
+      attempt.SetCheckpointTime(lapIdx, int(cpIdx), checkpointTimeMs);
     }
   }
 
@@ -34,6 +33,24 @@ Attempt@ ArchiveCurrentAttempt() {
 // Called at every checkpoint so mid-run data survives a crash or reload.
 void ArchiveCurrentRun() {
   Attempt@ src = g_state.currentAttempt;
-  if (src is null || src.LapCount <= 0) return;
+  if (src is null || src.laps.Length <= 0) return;
   g_state.history.UpsertAttempt(src);
+}
+
+// Archive valid in-progress attempt before ResetRace on restart; returns attempt for bests handoff.
+Attempt@ TryArchivePreviousAttemptForRestart() {
+  Attempt@ attemptForBests = null;
+  if (g_state.hasPlayerRaced) {
+    @g_state.previousAttempt = g_state.currentAttempt;
+    attemptForBests = ArchiveCurrentAttempt();
+    g_state.currentAttemptId++;
+    g_state.hasPlayerRaced = false;
+    PrintOnce("Attempt saved");
+  }
+  return attemptForBests;
+}
+
+void PersistCurrentRun() {
+  ArchiveCurrentRun();
+  g_state.history.SaveData();
 }

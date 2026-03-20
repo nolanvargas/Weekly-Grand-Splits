@@ -1,24 +1,15 @@
 string GetMapName() {
-#if TMNEXT
   auto app = GetApp();
   if (app.RootMap is null) return "";
   return app.RootMap.MapName;
-#else
-  return "";
-#endif
 }
 
 string GetMapId() {
-#if TMNEXT
   auto app = GetApp();
   if (app.RootMap is null) return "";
   return app.RootMap.IdName;
-#else
-  return "";
-#endif
 }
 
-#if TMNEXT
 bool IsWaypointFinish(int landmarkIdx) {
   // -1 is an indication that CSmPlayer @smPlayer = GetPlayer() is null
   if (landmarkIdx == -1) return false;
@@ -37,7 +28,6 @@ int GetSpawnCheckpoint() {
   if (smPlayer is null) return -1;
   return smPlayer.SpawnIndex;
 }
-#endif
 
 // Detects laps and checkpoints for the current map and updates g_state config.
 // This is called when the map changes or when the CP count needs to be recomputed.
@@ -46,7 +36,6 @@ void UpdateWaypoints() {
   g_state.numLaps = 1;
   g_state.isMultiLap = false;
 
-#if TMNEXT
   // Start with one CP for the finish.
   g_state.numCps = 1;
 
@@ -61,8 +50,8 @@ void UpdateWaypoints() {
   g_state.numLaps = map.TMObjective_NbLaps;
   g_state.isMultiLap = map.TMObjective_IsLapRace;
 
-  // For effectively single-lap maps, keep default of one finish CP.
-  if (!g_state.isMultiLap || g_state.numLaps == 1) {
+  // effectively single-lap maps
+  if (g_state.numLaps == 1) {
     g_state.isMultiLap = false;
     return;
   }
@@ -71,8 +60,8 @@ void UpdateWaypoints() {
 
   // Count checkpoints
   array<int> links;
-  for (uint i = 0; i < landmarks.Length; i++) {
-    auto landmark = landmarks[i];
+  for (uint landmarkIndex = 0; landmarkIndex < landmarks.Length; landmarkIndex++) {
+    auto landmark = landmarks[landmarkIndex];
     if (landmark.Waypoint is null) continue;
 
     if (landmark.Tag == "Checkpoint") {
@@ -84,5 +73,4 @@ void UpdateWaypoints() {
       }
     }
   }
-#endif
 }

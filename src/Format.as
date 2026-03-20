@@ -1,11 +1,11 @@
 bool g_fmtThousandths = false;
 
-string ZeroPad2(int n) {
-  return n < 10 ? "0" + n : "" + n;
+string ZeroPad2(int value) {
+  return value < 10 ? "0" + value : "" + value;
 }
 
-string ZeroPad3(int n) {
-  return n < 10 ? "00" + n : n < 100 ? "0" + n : "" + n;
+string ZeroPad3(int value) {
+  return value < 10 ? "00" + value : value < 100 ? "0" + value : "" + value;
 }
 
 // Returns ".xx" (hundredths) or ".xxx" (thousandths)
@@ -37,14 +37,14 @@ string FormatCpTime(int ms) {
   return (ms / 1000) + SubSecHundredths(ms);
 }
 
-string PadLeft(const string &in s, int width) {
-  string result = s;
+string PadLeft(const string &in text, int width) {
+  string result = text;
   while (int(result.Length) < width) result = " " + result;
   return result;
 }
 
-string PadRight(const string &in s, int width) {
-  string result = s;
+string PadRight(const string &in text, int width) {
+  string result = text;
   while (int(result.Length) < width) result = result + " ";
   return result;
 }

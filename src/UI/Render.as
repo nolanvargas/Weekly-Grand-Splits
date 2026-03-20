@@ -8,12 +8,9 @@ vec2 anchorCp = vec2(300, 780);
 // Entry point copied and adapted from:
 //   https://github.com/Phlarx/tm-ultimate-medals
 void Render() {
-  StorageFile@ storage = g_storage;
   auto app = cast<CTrackMania>(GetApp());
 
-#if TMNEXT
   auto map = app.RootMap;
-#endif
 
   if (!g_state.isMultiLap) {return;}
 

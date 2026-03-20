@@ -1,9 +1,9 @@
 // Clears run data and session bests for the current map.
 void ResetCommon() {
   g_state.waitForCarReset = true;
-  ResetRace(null);
+  ResetRace(null); // TODO: be sure to record previous attempt state
   g_state.bests.Clear();
-  @g_state.staleAttempt = null;
+  @g_state.previousAttempt = null;
   g_state.hasPlayerRaced = false;
 }
 
@@ -23,7 +23,15 @@ void ResetRace(Attempt@ previousAttemptForBests) {
   g_state.prevLapRaceTime = 0;
   g_state.lastCpTime = 0;
 
-#if TMNEXT
-    g_state.lastCP = GetSpawnCheckpoint();
-#endif
+  g_state.lastCP = GetSpawnCheckpoint();
+}
+
+// Minimal run-boundary sync when skipping ResetRace() in dry-run mode (CP/lap cursor only).
+void ApplyDryRunRestartSync() {
+  g_state.currentLap = 0;
+  g_state.isFinished = false;
+  g_state.finishRaceTime = 0;
+  g_state.prevLapRaceTime = 0;
+  g_state.lastCpTime = 0;
+  g_state.lastCP = GetSpawnCheckpoint();
 }

@@ -9,23 +9,25 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
       UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
     }
 
+    Attempt@ disp = g_state.GetDisplayAttempt();
     // 10 lap rows
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
-      array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
+      Lap@ lap = null;
+      if (disp !is null && lapIdx < int(disp.laps.Length)) {
+        @lap = disp.GetLap(lapIdx);
+      }
       // mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
-      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && int(lapCp.Length) > lapIdx;
+      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && disp !is null && lapIdx < int(disp.laps.Length);
       bool active    = isRacing && lapIdx == g_state.currentLap;
 
       if (completed || active) {
         // for completed or active laps, render each CP cell as either an absolute time or delta vs the chosen reference.
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
-        array<int> cpTimes;
-        if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
         for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
           UI::TableNextColumn();
-          if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
-          RenderCpCell(cpTimes[cpIdx], GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
+          if (lap is null || cpIdx >= int(lap.checkpoints.Length)) { UI::Text("-"); continue; }
+          RenderCpCell(lap.GetCheckpointTime(cpIdx), GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
         }
       } else {
         UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
@@ -51,20 +53,22 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
       UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + (lapIdx + 1));
     }
 
+    Attempt@ disp = g_state.GetDisplayAttempt();
     // one row per CP
     for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
       UI::TableNextRow();
       UI::TableNextColumn(); UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
-      array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
       for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
         UI::TableNextColumn();
-        bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && int(lapCp.Length) > lapIdx;
+        bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && disp !is null && lapIdx < int(disp.laps.Length);
         bool active    = isRacing && lapIdx == g_state.currentLap;
         if (!completed && !active) { UI::Text("-"); continue; }
-      array<int> cpTimes;
-      if (lapIdx < int(lapCp.Length)) cpTimes = lapCp[lapIdx];
-        if (cpIdx >= int(cpTimes.Length)) { UI::Text("-"); continue; }
-        RenderCpCell(cpTimes[cpIdx], GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
+        Lap@ lap = null;
+        if (disp !is null && lapIdx < int(disp.laps.Length)) {
+          @lap = disp.GetLap(lapIdx);
+        }
+        if (lap is null || cpIdx >= int(lap.checkpoints.Length)) { UI::Text("-"); continue; }
+        RenderCpCell(lap.GetCheckpointTime(cpIdx), GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
       }
     }
 
@@ -78,9 +82,7 @@ void RenderCpTable() {
   if (!cpTableVisible) return;
 
   auto app = cast<CTrackMania>(GetApp());
-#if TMNEXT
   auto map = app.RootMap;
-#endif
 
   if (!g_state.isMultiLap) return;
   if (cpHideWithIFace) {
@@ -94,11 +96,15 @@ void RenderCpTable() {
   if (map is null || map.MapInfo.MapUid == "") return;
 
   // Determine column count from data.
-  array<array<int>> lapCp = g_state.GetDisplayAttempt().ToLapCpArray();
+  Attempt@ disp = g_state.GetDisplayAttempt();
   int numCols = g_state.numCps;
-  for (uint lapIdx = 0; lapIdx < lapCp.Length; lapIdx++) {
-    // grow the CP column count to accommodate the longest split list.
-    if (int(lapCp[lapIdx].Length) > numCols) numCols = int(lapCp[lapIdx].Length);
+  if (disp !is null) {
+    for (uint lapIdx = 0; lapIdx < disp.laps.Length; lapIdx++) {
+      Lap@ lap = disp.laps[lapIdx];
+      if (lap is null) continue;
+      // grow the CP column count to accommodate the longest split list.
+      if (int(lap.checkpoints.Length) > numCols) numCols = int(lap.checkpoints.Length);
+    }
   }
   // ensure numCols covers historical splits; even when there are
   // no recorded CPs yet (numCols == 0), still show the empty window so the user can see that

@@ -37,13 +37,13 @@ void RenderDebugState() {
         if (atm is null) {
             UI::Text("currentAttempt: null");
         } else {
-            UI::Text("lapCount:       " + atm.LapCount);
-            for (uint i = 0; i < atm.LapCount; i++) {
-                Lap@ lap = atm.GetLap(int(i));
-                UI::Text("  lap[" + i + "] cps=" + lap.CheckpointCount + " time=" + lap.LapTime + " ms");
+            UI::Text("lapCount:       " + atm.laps.Length);
+            for (uint lapSlot = 0; lapSlot < atm.laps.Length; lapSlot++) {
+                Lap@ lap = atm.GetLap(int(lapSlot));
+                UI::Text("  lap[" + lapSlot + "] cps=" + lap.checkpoints.Length + " time=" + lap.GetLapTime() + " ms");
             }
         }
-        UI::Text("staleAttempt:   " + (g_state.staleAttempt is null ? "null" : "present"));
+        UI::Text("previousAttempt:   " + (g_state.previousAttempt is null ? "null" : "present"));
     }
     UI::End();
 }

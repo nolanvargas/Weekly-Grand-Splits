@@ -5,10 +5,10 @@ void DrawGradientBg(vec2 pos, vec2 size, bool radial, vec4 color1, vec4 color2) 
   nvg::Paint paint;
   if (radial) {
     // build a radial gradient centered on the window, using color1 at the center and color2 at the radius.
-    float r = Math::Sqrt(size.x * size.x / 4.0f + size.y * size.y / 4.0f);
+    float gradientRadius = Math::Sqrt(size.x * size.x / 4.0f + size.y * size.y / 4.0f);
     paint = nvg::RadialGradient(
       vec2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f),
-      0.0f, r,
+      0.0f, gradientRadius,
       color1, color2
     );
   } else {
@@ -75,4 +75,37 @@ void SetMinWidth(int width) {
   UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(0, 0));
   UI::Dummy(vec2(width, 0));
   UI::PopStyleVar();
+}
+
+
+// --- JSON helpers (used only by RaceHistory disk format) ---
+
+Json::Value@ BuildLapsJson2D(const array<array<int>>@ data) {
+  Json::Value@ outer = Json::Array();
+  for (uint rowIndex = 0; rowIndex < data.Length; rowIndex++) {
+    Json::Value@ inner = Json::Array();
+    for (uint colIndex = 0; colIndex < data[rowIndex].Length; colIndex++) {
+      inner.Add(Json::Value(data[rowIndex][colIndex]));
+    }
+    outer.Add(inner);
+  }
+  return outer;
+}
+
+array<array<int>> ReadLapsJson2D(Json::Value@ outer) {
+  array<array<int>> result;
+  for (uint rowIndex = 0; rowIndex < outer.Length; rowIndex++) {
+    array<int> row;
+    Json::Value@ inner = outer[rowIndex];
+    for (uint colIndex = 0; colIndex < inner.Length; colIndex++) {
+      row.InsertLast(int(inner[colIndex]));
+    }
+    result.InsertLast(row);
+  }
+  return result;
+}
+
+string MapRaceHistoryJsonPath(const string&in mapId) {
+  IO::CreateFolder(IO::FromStorageFolder("maps"));
+  return IO::FromStorageFolder("maps/" + mapId + ".json");
 }

@@ -9,7 +9,9 @@ class GameState {
   bool isMultiLap = false;
 
   // Race state
-  int currentLap = 0;             // Index of the lap the player is currently on (0-based).
+  // Lap index passed to Attempt.AppendCheckpointTime (0-based). Only OnLapFinished advances it
+  // after the closing split is written; intermediate checkpoints keep the same index.
+  int currentLap = 0;
   bool waitForCarReset = true;   // True while waiting for the player to respawn at start.
   bool resetData = true;         // Flag indicating that run data should be reset on next update.
   bool isFinished = false;       // True once the current run has been completed.
@@ -21,37 +23,124 @@ class GameState {
   int lastCP = 0;               // Index of the last checkpoint the player triggered.
 
   Attempt@ currentAttempt;
-  Attempt@ staleAttempt;   // holds the last attempt for faded display until the first new CP
+  Attempt@ previousAttempt;   // holds the last attempt for faded display until the first new CP
   int currentAttemptId = 0;
+  bool pendingAttemptCommenced = false;
 
   // True when displaying old/stale data: player is restarting with data from a previous run,
   // but no new checkpoint has arrived yet to replace it.
   bool IsStale() {
-    return (resetData && hasPlayerRaced) || staleAttempt !is null;
+    return (resetData && hasPlayerRaced) || previousAttempt !is null;
   }
 
-  // Returns the best attempt to read display data from: staleAttempt during the stale phase,
+  // Returns the best attempt to read display data from: previousAttempt during the stale phase,
   // currentAttempt otherwise.
   Attempt@ GetDisplayAttempt() {
-    return staleAttempt !is null ? staleAttempt : currentAttempt;
+    return previousAttempt !is null ? previousAttempt : currentAttempt;
   }
 
-  // Like GetLapTime but falls back to staleAttempt when present.
+  // Like GetLapTime but falls back to previousAttempt when present.
   int GetDisplayLapTime(int idx) const {
-    Attempt@ src = staleAttempt !is null ? staleAttempt : currentAttempt;
-    if (src is null || idx < 0 || idx >= int(src.LapCount)) return -1;
+    Attempt@ src = previousAttempt !is null ? previousAttempt : currentAttempt;
+    if (src is null || idx < 0 || idx >= int(src.laps.Length)) return -1;
     Lap@ lap = src.GetLap(idx);
-    int n = numCps;
-    if (n > 0 && int(lap.CheckpointCount) < n) return -1;
-    int t = lap.LapTime;
-    return (t > 0) ? t : -1;
+    int expectedCpCount = numCps;
+    if (expectedCpCount > 0 && int(lap.checkpoints.Length) != expectedCpCount) return -1;
+    return lap.GetLapTime();
   }
 
   // Constructor
   GameState() {
     history = RaceHistory();
     bests = Bests();
-    @currentAttempt = Attempt();
+  }
+
+  // --- Player event hooks ---
+
+  void OnMapChanged(const string &in mapId) {
+    HookEventPrint("Map changed: " + mapId);
+    if (debugPlayerEventsDryRun) {
+      pendingAttemptCommenced = false;
+      currentMap = mapId;
+      UpdateWaypoints();
+      playerStartTime = GetPlayerStartTime();
+      return;
+    }
+    ResetCommon();
+    pendingAttemptCommenced = false;
+    currentMap = mapId;
+    UpdateWaypoints();
+    if (isMultiLap) {
+      history.LoadData(mapId);
+    } else {
+      history.Clear();
+    }
+    playerStartTime = GetPlayerStartTime();
+  }
+
+  void OnNewAttempt() {
+    HookEventPrint("New attempt: " + (currentAttemptId + 1));
+    if (debugPlayerEventsDryRun) return;
+    previousAttempt = currentAttempt;
+    //UI needs to switch to previousAttempt
+    if (currentAttempt.tracked) {
+      @currentAttempt = Attempt(currentAttemptId + 1, numLaps);
+      bests.UpdateFromAttempt(previousAttempt, numLaps, numCps);
+    }
+  }
+
+  void OnAttemptCommenced() {
+    HookEventPrint("Attempt commenced: " + currentAttemptId);
+    if (debugPlayerEventsDryRun) return;
+    pendingAttemptCommenced = true;
+  }
+
+  void OnCheckpointReached(int cpIndex) {
+    int raceTime = GetPlayerCheckpointTime();
+    HookEventPrint("Checkpoint reached: " + cpIndex + " | " + raceTime + " ms");
+    if (debugPlayerEventsDryRun) {
+      lastCP = cpIndex;
+      lastCpTime = raceTime;
+      return;
+    }
+    //Swtich UI to currentAttempt
+    //Record value in json file
+    currentAttempt.tracked = true;
+    lastCP = cpIndex;
+    int cpDelta = raceTime - lastCpTime;
+    currentAttempt.AppendCheckpointTime(currentLap, cpDelta);
+    lastCpTime = raceTime;
+  }
+
+  void OnLapFinished() {
+    int raceTime = GetPlayerCheckpointTime();
+    int lapDelta = raceTime - prevLapRaceTime;
+    HookEventPrint("Lap finished: " + currentLap + " | total " + raceTime + " ms | lap " + lapDelta + " ms");
+    if (debugPlayerEventsDryRun) {
+      lastCP = GetCurrentCheckpoint();
+      lastCpTime = raceTime;
+      prevLapRaceTime = raceTime;
+      currentLap = currentLap + 1;
+      return;
+    }
+    // record value in json file
+    int finishSegment = raceTime - lastCpTime;
+    currentAttempt.AppendCheckpointTime(currentLap, finishSegment);
+    lastCP = GetCurrentCheckpoint();
+    lastCpTime = raceTime;
+    prevLapRaceTime = raceTime;
+    currentLap = currentLap + 1;
+  }
+
+  void OnAttemptComplete() {
+    int raceTime = GetPlayerCheckpointTime();
+    HookEventPrint("Attempt complete: " + raceTime + " ms");
+    if (debugPlayerEventsDryRun) return;
+    CompleteRun(raceTime);
+  }
+
+  void ClearPreviousOnCheckpointCrossing() {
+    @previousAttempt = null;
   }
 
   // Current run CP splits
@@ -59,56 +148,20 @@ class GameState {
 
   // Lap time accessors backed by the current Attempt.
   int GetLapTime(int idx) const {
-    if (idx < 0 || idx >= int(currentAttempt.LapCount)) return -1;
+    if (currentAttempt is null) return -1;
+    if (idx < 0 || idx >= int(currentAttempt.laps.Length)) return -1;
     Lap@ lap = currentAttempt.GetLap(idx);
-    int n = numCps;
-    if (n > 0 && int(lap.CheckpointCount) < n) return -1;
-    int t = lap.LapTime;
-    return (t > 0) ? t : -1;
+    int expectedCpCount = numCps;
+    if (expectedCpCount > 0 && int(lap.checkpoints.Length) != expectedCpCount) return -1;
+    return lap.GetLapTime();
   }
   
   void ResetLapTimes() {
-    @currentAttempt = Attempt();
+    @currentAttempt = null;
   }
 
-  void RecordCheckpoint(int cpIndex, int raceTime) {
-    lastCP = cpIndex;
-    int deltaTime = raceTime - prevLapRaceTime;
-    if (raceTime <= 0 || deltaTime <= 0) {
-      waitForCarReset = true;
-      return;
-    }
-    int cpDelta = raceTime - lastCpTime;
-    if (cpDelta > 0) {
-      // Actions: append a CP split when the time has advanced since the previous CP.
-      // We derive the next sequential CP index from the current Lap checkpoint count.
-      if (currentAttempt !is null) {
-        int lapIdx = currentLap;
-        int cpIdx = 0;
-        if (lapIdx >= 0 && lapIdx < int(currentAttempt.LapCount)) {
-          Lap@ lap = currentAttempt.GetLap(lapIdx);
-          cpIdx = int(lap.CheckpointCount);
-        }
-        if (lapIdx >= 0) currentAttempt.SetCheckpointTime(lapIdx, cpIdx, cpDelta);
-
-        // Actions: once the player records the first checkpoint of lap 1,
-        // flag that this attempt is now valid and should be archived when it finishes.
-        if (lapIdx == 0 && cpIdx == 0) {
-          hasPlayerRaced = true;
-        }
-      }
-    }
-    lastCpTime = raceTime;
-  }
-
-  void CompleteLap(int lapTime, int raceTime) {
-    prevLapRaceTime = raceTime;
-    int idx = currentLap;
-    if (idx < 0 || idx >= MAX_LAPS) return;
-  }
 
   void CompleteRun(int raceTime) {
-    currentLap = currentLap + 1;
     waitForCarReset = true;
     resetData = true;
     isFinished = true;

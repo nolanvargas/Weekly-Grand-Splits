@@ -99,12 +99,12 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
 void RenderLapTableTransposed(bool isRacing, int liveTime) {
   int totalRun = 0, bestForCompleted = 0;
   bool hasCompletedLap = false, allCompletedHaveBest = true;
-  for (int i = 0; i < MAX_LAPS; i++) {
-    int lapTime = g_state.GetDisplayLapTime(i);
+  for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
+    int lapTime = g_state.GetDisplayLapTime(lapIdx);
     if (lapTime != -1) {
       // for each completed lap, add its time to the total and, when available, its PB to the comparison baseline.
       totalRun += lapTime; hasCompletedLap = true;
-      int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(i);
+      int bestLap = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
       if (bestLap != -1) bestForCompleted += bestLap;
       else allCompletedHaveBest = false;
     }

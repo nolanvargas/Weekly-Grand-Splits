@@ -1,8 +1,6 @@
-#if TMNEXT
 CSmArenaClient @GetPlayground() {
   return cast<CSmArenaClient>(GetApp().CurrentPlayground);
 }
-#endif
 
 CSmArenaRulesMode @GetPlaygroundScript() {
   return cast<CSmArenaRulesMode>(GetApp().PlaygroundScript);
@@ -17,23 +15,21 @@ int GetCurrentGameTime() {
   return pg.Interface.ManialinkScriptHandler.GameTime;
 }
 
-#if TMNEXT
 CSmPlayer @GetPlayer() {
   auto pg = GetPlayground();
   if (pg is null || pg.GameTerminals.Length != 1) return null;
   return cast<CSmPlayer>(pg.GameTerminals[0].GUIPlayer);
 }
-#endif
 
 CSmScriptPlayer @GetPlayerScript() {
-  CSmPlayer @p = GetPlayer();
-  return p is null ? null : cast<CSmScriptPlayer>(p.ScriptAPI);
+  CSmPlayer @player = GetPlayer();
+  return player is null ? null : cast<CSmScriptPlayer>(player.ScriptAPI);
 }
 
 bool IsPlayerReady() {
-  CSmScriptPlayer @s = GetPlayerScript();
-  return s !is null && GetCurrentPlayerRaceTime() >= 0 &&
-         s.Post == CSmScriptPlayer::EPost::CarDriver && GetSpawnCheckpoint() != -1;
+  CSmScriptPlayer @scriptPlayer = GetPlayerScript();
+  return scriptPlayer !is null && GetCurrentPlayerRaceTime() >= 0 &&
+         scriptPlayer.Post == CSmScriptPlayer::EPost::CarDriver && GetSpawnCheckpoint() != -1;
 }
 
 int GetCurrentPlayerRaceTime() {
@@ -41,18 +37,14 @@ int GetCurrentPlayerRaceTime() {
 }
 
 int GetPlayerCheckpointTime() {
-#if TMNEXT
-  int ui = GetUICheckpointTime();
-  return ui == 0 ? GetCurrentPlayerRaceTime() : ui;
-#endif
+  int uiCheckpointMs = GetUICheckpointTime();
+  return uiCheckpointMs == 0 ? GetCurrentPlayerRaceTime() : uiCheckpointMs;
 }
 
-#if TMNEXT
 int GetPlayerStartTime() {
-  CSmPlayer @p = GetPlayer();
-  return p is null ? -1 : p.StartTime;
+  CSmPlayer @player = GetPlayer();
+  return player is null ? -1 : player.StartTime;
 }
-#endif
 
 int GetActualPlayerStartTime() {
   return GetPlayerStartTime() - GetCurrentPlayerRaceTime();
@@ -69,8 +61,6 @@ int GetUICheckpointTime() {
 }
 
 int GetCurrentCheckpoint() {
-#if TMNEXT
-  CSmPlayer @p = GetPlayer();
-  return p is null ? -1 : p.CurrentLaunchedRespawnLandmarkIndex;
-#endif
+  CSmPlayer @player = GetPlayer();
+  return player is null ? -1 : player.CurrentLaunchedRespawnLandmarkIndex;
 }
