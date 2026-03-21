@@ -1,45 +1,57 @@
 void Update(float dt) {
+  BeginLogFrame();
 
   string mapId = GetMapId();
 
-  if (g_state.currentMap != mapId) { // Map_Changed
+  if (g_state.currentMap != "" && mapId == "") {
+    g_state.onMapLeave();
+  }
+
+  if (g_state.currentMap != mapId) {
     g_state.OnMapChanged(mapId);
   }
-  if (!g_state.isMultiLap) return;
+  if (g_state.pendingWaypointUpdate) {
+    LogUpdate("[Update] Waiting for playground (pendingWaypointUpdate)");
+    g_state.TryCompleteWaypointUpdate();
+    return;
+  }
+  if (!g_state.isMultiLap) {
+    LogUpdate("[Update] Not in a multi-lap map, plugin inactive");
+    return;
+  }
+  // player restarting || player just loaded into first run
+  if (g_state.pendingAttemptCommenced && !IsPlayerReady() ||
+    GetCurrentPlayerRaceTime() < -1000 && !g_state.waitingForStart) {
+
+    // prevents OnNewAttempt if user leaves map
+    if (GetCurrentPlayerRaceTime() < -1000) {
+      g_state.OnNewAttempt();
+      g_state.pendingAttemptCommenced = false;
+    }
+  }
 
   if (g_state.waitForCarReset) {
-    // Player not in the car yet
-    if (!debugPlayerEventsDryRun) PrintOnce("Waiting for spawn");
-    g_state.waitForCarReset = !IsPlayerReady(); // Check this works
+    bool ready = IsPlayerReady();
+    LogUpdate("Waiting for player");
+    g_state.waitForCarReset = !ready;
     return;
   }
 
   if (g_state.resetData) {
-    if (!debugPlayerEventsDryRun) PrintOnce("Restarting...");
     if (IsPlayerReady()) {
       g_state.OnAttemptCommenced();
 
-      if (debugPlayerEventsDryRun) {
-        ApplyDryRunRestartSync();
-      } else {
-        Attempt@ attemptForBests = TryArchivePreviousAttemptForRestart();
-        ResetRace(attemptForBests);
-      }
+      ResetRace(g_state.currentAttempt);
       g_state.resetData = false;
 
       g_state.playerStartTime = GetActualPlayerStartTime();
-      g_state.OnNewAttempt();
-
     }
     return;
-  } else {
-    if (!IsPlayerReady()) {
-      if (!debugPlayerEventsDryRun) PrintOnce("Player retrying");
-      g_state.resetData = true;
-      return;
-    }
   }
 
+  if (g_state.isFinished || g_state.waitingForStart) {
+    return;
+  }
 
   int cp = GetCurrentCheckpoint();
 
@@ -49,9 +61,7 @@ void Update(float dt) {
     } else {
       g_state.OnCheckpointReached(cp);
     }
-    if (g_state.currentLap == g_state.numLaps) {
-      g_state.OnAttemptComplete();
-    }
+
+    PersistCurrentRun();
   }
-  if (!debugPlayerEventsDryRun) PersistCurrentRun();
 }

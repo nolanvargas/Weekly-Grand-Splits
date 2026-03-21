@@ -11,7 +11,7 @@ void RenderDebugState() {
 
         UI::Separator();
         UI::Text("--- Race State ---");
-        UI::Text("currentLap:         " + g_state.currentLap);
+        UI::Text("currentLap:         " + (g_state.currentLap));
         UI::Text("waitForCarReset:    " + (g_state.waitForCarReset ? "true" : "false"));
         UI::Text("resetData:          " + (g_state.resetData ? "true" : "false"));
         UI::Text("isFinished:         " + (g_state.isFinished ? "true" : "false"));
@@ -23,6 +23,9 @@ void RenderDebugState() {
         UI::Text("finishRaceTime:     " + g_state.finishRaceTime + " ms");
         UI::Text("playerStartTime:    " + g_state.playerStartTime + " ms");
         UI::Text("currentAttemptId:   " + g_state.currentAttemptId);
+        UI::Text("pendingAttemptCommenced: " + (g_state.pendingAttemptCommenced ? "true" : "false"));
+        UI::Text("pendingWaypointUpdate:   " + (g_state.pendingWaypointUpdate ? "true" : "false"));
+        UI::Text("waitingForStart:        " + (g_state.waitingForStart ? "true" : "false"));
 
         UI::Separator();
         UI::Text("--- Live ---");
@@ -40,7 +43,7 @@ void RenderDebugState() {
             UI::Text("lapCount:       " + atm.laps.Length);
             for (uint lapSlot = 0; lapSlot < atm.laps.Length; lapSlot++) {
                 Lap@ lap = atm.GetLap(int(lapSlot));
-                UI::Text("  lap[" + lapSlot + "] cps=" + lap.checkpoints.Length + " time=" + lap.GetLapTime() + " ms");
+                UI::Text("  lap[" + (lapSlot + 1) + "] cps=" + lap.checkpoints.Length + " time=" + lap.GetLapTime() + " ms");
             }
         }
         UI::Text("previousAttempt:   " + (g_state.previousAttempt is null ? "null" : "present"));

@@ -165,21 +165,9 @@ class Bests {
 
   // Incrementally updates best caches from a single archived attempt.
   // This is used so we do not recompute/adjust best references during an active run.
-  void UpdateFromAttempt(Attempt@ attempt, int numLaps, int numCps) {
-    int newNumLaps = Math::Max(0, numLaps);
-    int newNumCps = Math::Max(0, numCps);
-    if (newNumLaps <= 0 || newNumCps <= 0) {
-      Clear();
-      return;
-    }
-
-    // If config changes (e.g., map change without full reload), reset caches to avoid mixing shapes.
-    if (newNumLaps != _numLaps || newNumCps != _numCps) {
-      Clear();
-      _numLaps = newNumLaps;
-      _numCps = newNumCps;
-    }
-
+  void UpdateFromAttempt(Attempt@ attempt) {
+    LogWarn("Updating bests");
+    return;
     // Ensure reference containers exist.
     if (bestAnyCp is null || int(bestAnyCp.checkpoints.Length) != _numCps) {
       @bestAnyCp = Lap(0, _numCps);

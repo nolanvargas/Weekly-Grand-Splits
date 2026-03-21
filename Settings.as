@@ -126,33 +126,113 @@ int styleColWidthCpDelta = 52;
 
 // --- Debug ---
 
-[Setting category="Debug" name="Print race events to log"]
-bool debugPrintEvents = false;
-
-[Setting category="Debug" name="Dry-run player events (hooks print only; no persistence or metrics)"]
-bool debugPlayerEventsDryRun = false;
-
-string g_lastPrintOnce = "";
-void PrintOnce(const string&in msg) {
-  if (!debugPrintEvents || msg == g_lastPrintOnce) return;
-  g_lastPrintOnce = msg;
-  print(msg);
-}
-
-// Player event hooks: when dry-run is on, always print (no dedupe) and skip side effects in GameState.
-void HookEventPrint(const string&in msg) {
-  if (debugPlayerEventsDryRun) {
-    print(msg);
-    return;
-  }
-  PrintOnce(msg);
-}
-
 [Setting category="Debug" name="Show live game state window"]
 bool debugShowStateWindow = false;
 
 [Setting category="Debug" name="Notify ComputeFromHistory duration (ms)"]
 bool debugNotifyComputeFromHistory = false;
+
+// Event hook toggles
+[Setting category="Debug" name="Log: map events (load/change/playground)"]
+bool debugLogEventMap = false;
+
+[Setting category="Debug" name="Log: race events (attempt start/end, give up)"]
+bool debugLogEventRace = false;
+
+[Setting category="Debug" name="Log: checkpoint & lap events"]
+bool debugLogEventCP = false;
+
+[Setting category="Debug" name="Log: player events (respawn, stale state)"]
+bool debugLogEventPlayer = false;
+
+// Other log toggles
+[Setting category="Debug" name="Log: update loop"]
+bool debugPrintUpdate = false;
+
+[Setting category="Debug" name="Log: UI state changes"]
+bool debugPrintUIState = false;
+
+[Setting category="Debug" name="Log: warnings & errors"]
+bool debugPrintWarnings = false;
+
+// Consecutive print limit
+[Setting category="Debug" name="Max consecutive identical prints (0 = unlimited)" min=0 max=100]
+int debugMaxConsecutivePrints = 5;
+
+// --- Log core ---
+// Tracks how many consecutive frames each string has been attempted.
+// BeginLogFrame() must be called once per Update() tick to flush frame state.
+// Uses parallel arrays since dictionary is not available in this build.
+
+array<string> g_logStrings;       // tracked message strings
+array<int>    g_logCounts;        // consecutive frame count per string (parallel to g_logStrings)
+array<string> g_logSeenThisFrame; // strings seen in the current frame
+
+void BeginLogFrame() {
+  // Drop entries for strings not seen last frame (streak broken); iterate backwards for safe removal.
+  for (int i = int(g_logStrings.Length) - 1; i >= 0; i--) {
+    if (g_logSeenThisFrame.Find(g_logStrings[i]) < 0) {
+      g_logStrings.RemoveAt(i);
+      g_logCounts.RemoveAt(i);
+    }
+  }
+  g_logSeenThisFrame.Resize(0);
+}
+
+// Returns true if msg should be printed this frame, false if suppressed.
+// Always records msg as seen this frame for streak tracking.
+bool LogAllowed(const string&in msg) {
+  if (g_logSeenThisFrame.Find(msg) < 0) {
+    g_logSeenThisFrame.InsertLast(msg);
+  }
+  if (debugMaxConsecutivePrints == 0) return true;
+  int idx = g_logStrings.Find(msg);
+  if (idx < 0) {
+    g_logStrings.InsertLast(msg);
+    g_logCounts.InsertLast(1);
+    return true;
+  }
+  if (g_logCounts[idx] >= debugMaxConsecutivePrints) return false;
+  g_logCounts[idx]++;
+  return true;
+}
+
+// --- Log helpers ---
+
+void LogEventMap(const string&in msg) {
+  if (!debugLogEventMap) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogEventRace(const string&in msg) {
+  if (!debugLogEventRace) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogEventCP(const string&in msg) {
+  if (!debugLogEventCP) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogEventPlayer(const string&in msg) {
+  if (!debugLogEventPlayer) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogUpdate(const string&in msg) {
+  if (!debugPrintUpdate) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogUIState(const string&in msg) {
+  if (!debugPrintUIState) return;
+  if (LogAllowed(msg)) print(msg);
+}
+
+void LogWarn(const string&in msg) {
+  if (!debugPrintWarnings) return;
+  if (LogAllowed(msg)) print(msg);
+}
 
 [SettingsTab name="Lap Window Colors" icon="Palette"]
 void S_RenderLapColorsTab() {

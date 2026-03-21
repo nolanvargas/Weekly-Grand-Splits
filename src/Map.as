@@ -40,12 +40,24 @@ void UpdateWaypoints() {
   g_state.numCps = 1;
 
   auto playground = GetPlayground();
-  if (playground is null || playground.Arena is null || playground.Arena.Rules is null) {
+  if (playground is null) {
+    LogWarn("UpdateWaypoints: playground is null");
+    return;
+  }
+  if (playground.Arena is null) {
+    LogWarn("UpdateWaypoints: Arena is null");
+    return;
+  }
+  if (playground.Arena.Rules is null) {
+    LogWarn("UpdateWaypoints: Rules is null");
     return;
   }
 
   auto map = playground.Map;
-  if (map is null) return;
+  if (map is null) {
+    LogWarn("UpdateWaypoints: map is null");
+    return;
+  }
 
   g_state.numLaps = map.TMObjective_NbLaps;
   g_state.isMultiLap = map.TMObjective_IsLapRace;
@@ -53,6 +65,7 @@ void UpdateWaypoints() {
   // effectively single-lap maps
   if (g_state.numLaps == 1) {
     g_state.isMultiLap = false;
+    LogWarn("UpdateWaypoints: single-lap map detected");
     return;
   }
 

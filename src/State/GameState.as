@@ -21,22 +21,19 @@ class GameState {
   int finishRaceTime = 0;       // Race timer value at which the current run finished.
   int playerStartTime = -1;     // Absolute game time (ms) when current run started; -1 unknown.
   int lastCP = 0;               // Index of the last checkpoint the player triggered.
+  bool waitingForStart = false;  // True when Player is awaiting at start line (~1500 ms).
 
   Attempt@ currentAttempt;
   Attempt@ previousAttempt;   // holds the last attempt for faded display until the first new CP
   int currentAttemptId = 0;
   bool pendingAttemptCommenced = false;
+  bool pendingWaypointUpdate = false;
 
   // True when displaying old/stale data: player is restarting with data from a previous run,
   // but no new checkpoint has arrived yet to replace it.
   bool IsStale() {
-    return (resetData && hasPlayerRaced) || previousAttempt !is null;
-  }
-
-  // Returns the best attempt to read display data from: previousAttempt during the stale phase,
-  // currentAttempt otherwise.
-  Attempt@ GetDisplayAttempt() {
-    return previousAttempt !is null ? previousAttempt : currentAttempt;
+    bool stale = (resetData && hasPlayerRaced) || previousAttempt !is null;
+    return stale;
   }
 
   // Like GetLapTime but falls back to previousAttempt when present.
@@ -58,84 +55,113 @@ class GameState {
   // --- Player event hooks ---
 
   void OnMapChanged(const string &in mapId) {
-    HookEventPrint("Map changed: " + mapId);
-    if (debugPlayerEventsDryRun) {
-      pendingAttemptCommenced = false;
-      currentMap = mapId;
-      UpdateWaypoints();
-      playerStartTime = GetPlayerStartTime();
-      return;
-    }
+    LogEventMap("Map changed: " + mapId);
     ResetCommon();
     pendingAttemptCommenced = false;
     currentMap = mapId;
+    if (mapId != "") {
+      pendingWaypointUpdate = true;
+      TryCompleteWaypointUpdate();
+      playerStartTime = GetPlayerStartTime();
+    }
+  }
+
+  void onMapLeave() {
+    LogEventMap("Map left");
+    pendingAttemptCommenced = false;
+    waitForCarReset = true;
+    waitingForStart = false;
+    currentMap = "";
+  }
+
+  // Called immediately on map change and retried each frame until playground is ready.
+  void TryCompleteWaypointUpdate() {
+    if (!pendingWaypointUpdate) return;
+    if (GetPlayground() is null) return;
     UpdateWaypoints();
+    pendingWaypointUpdate = false;
     if (isMultiLap) {
-      history.LoadData(mapId);
+      history.LoadData(currentMap);
     } else {
       history.Clear();
     }
-    playerStartTime = GetPlayerStartTime();
+    g_uiState.OnReset();
   }
 
   void OnNewAttempt() {
-    HookEventPrint("New attempt: " + (currentAttemptId + 1));
-    if (debugPlayerEventsDryRun) return;
-    previousAttempt = currentAttempt;
-    //UI needs to switch to previousAttempt
-    if (currentAttempt.tracked) {
-      @currentAttempt = Attempt(currentAttemptId + 1, numLaps);
-      bests.UpdateFromAttempt(previousAttempt, numLaps, numCps);
-    }
+    LogEventRace("OnNewAttempt");
+    currentLap = 0;
+    waitingForStart = true;
+    isFinished = false;
+    currentAttemptId++;
+    g_state.resetData = true;
+
+    // @previousAttempt = currentAttempt;
+    // g_uiState.OnNewAttempt(previousAttempt);
+    // If plugin was loaded mid-run, this would make currentAttempt null
+    // if (currentAttempt is null) {
+    //   @currentAttempt = Attempt(currentAttemptId, numLaps);
+    // } else if (currentAttempt.tracked) {
+    //   @currentAttempt = Attempt(currentAttemptId + 1, numLaps);
+    //   bests.UpdateFromAttempt(previousAttempt);
+    // }
   }
 
   void OnAttemptCommenced() {
-    HookEventPrint("Attempt commenced: " + currentAttemptId);
-    if (debugPlayerEventsDryRun) return;
+    LogEventRace("OnAttemptCommenced");
+    currentLap = 1;
     pendingAttemptCommenced = true;
+    waitingForStart = false;
+    lastCP = GetCurrentCheckpoint();
   }
 
   void OnCheckpointReached(int cpIndex) {
+    // -1 when menu UI appears after race completion, so ignore it.
+    if (cpIndex == -1) { return; }
+
+    lastCP = cpIndex;
     int raceTime = GetPlayerCheckpointTime();
-    HookEventPrint("Checkpoint reached: " + cpIndex + " | " + raceTime + " ms");
-    if (debugPlayerEventsDryRun) {
-      lastCP = cpIndex;
-      lastCpTime = raceTime;
+    LogEventRace("OnCheckpointReached");
+    if (currentAttempt is null) {
+      LogWarn("OnCheckpointReached: currentAttempt is null at cp=" + cpIndex + ", skipping record");
       return;
     }
-    //Swtich UI to currentAttempt
-    //Record value in json file
+    g_uiState.OnCheckpointReached(currentAttempt);
     currentAttempt.tracked = true;
-    lastCP = cpIndex;
     int cpDelta = raceTime - lastCpTime;
     currentAttempt.AppendCheckpointTime(currentLap, cpDelta);
     lastCpTime = raceTime;
   }
 
   void OnLapFinished() {
-    int raceTime = GetPlayerCheckpointTime();
-    int lapDelta = raceTime - prevLapRaceTime;
-    HookEventPrint("Lap finished: " + currentLap + " | total " + raceTime + " ms | lap " + lapDelta + " ms");
-    if (debugPlayerEventsDryRun) {
-      lastCP = GetCurrentCheckpoint();
-      lastCpTime = raceTime;
-      prevLapRaceTime = raceTime;
-      currentLap = currentLap + 1;
+    LogEventRace("OnLapFinished");
+    currentLap++;
+    if (currentLap > numLaps) {
+      OnAttemptComplete();
       return;
     }
-    // record value in json file
+    // check for attempt complete
+    lastCP = GetCurrentCheckpoint();
+    int raceTime = GetPlayerCheckpointTime();
+    int lapDelta = raceTime - prevLapRaceTime;
+    if (currentAttempt is null) {
+      LogWarn("OnLapFinished: currentAttempt is null at lap=" + currentLap + ", skipping record");
+      return;
+    }
     int finishSegment = raceTime - lastCpTime;
     currentAttempt.AppendCheckpointTime(currentLap, finishSegment);
-    lastCP = GetCurrentCheckpoint();
     lastCpTime = raceTime;
     prevLapRaceTime = raceTime;
-    currentLap = currentLap + 1;
   }
 
   void OnAttemptComplete() {
+    LogEventRace("OnAttemptComplete");
+    if (isFinished) return;
+    isFinished = true;
+    pendingAttemptCommenced = false;
+    waitForCarReset = true;
+    return;
     int raceTime = GetPlayerCheckpointTime();
-    HookEventPrint("Attempt complete: " + raceTime + " ms");
-    if (debugPlayerEventsDryRun) return;
     CompleteRun(raceTime);
   }
 
@@ -163,9 +189,10 @@ class GameState {
 
   void CompleteRun(int raceTime) {
     waitForCarReset = true;
-    resetData = true;
+    // resetData = true;
     isFinished = true;
     finishRaceTime = raceTime;
+    pendingAttemptCommenced = false;
   }
 }
 

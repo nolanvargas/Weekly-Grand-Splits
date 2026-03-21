@@ -76,7 +76,6 @@ class RaceHistory {
   void SaveToFile(const string&in mapId, int numCps) {
     if (mapId == "" || numCps == 0) return;
     if (_attempts.Length == 0) return;
-    if (int(_attempts.Length) < _minPersistedAttemptCount) return;
     Json::ToFile(MapRaceHistoryJsonPath(mapId), ToJson(), true);
   }
 

@@ -4,11 +4,6 @@ class Checkpoint {
 
   Checkpoint() {}
 
-  Checkpoint(int index, int time) {
-    this.index = index;
-    this.time = time;
-  }
-
   Checkpoint(int index) {
     this.index = index;
   }

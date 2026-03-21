@@ -12,7 +12,11 @@ void Render() {
 
   auto map = app.RootMap;
 
+  RenderDebugState();
+
   if (!g_state.isMultiLap) {return;}
+
+  g_uiState.Update();
 
   bool lapHideByIFace = lapHideWithIFace && (
     app.CurrentPlayground is null || app.CurrentPlayground.Interface is null ||
@@ -35,7 +39,9 @@ void Render() {
     UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
     UI::PushFontSize(lapFontSize);
     if (lapGradientEnabled && g_lapWinSize.x > 0) DrawGradientBg(g_lapWinPos, g_lapWinSize, lapGradientRadial, lapGradientColor1, lapGradientColor2);
-    bool isStale = g_state.IsStale();
+    bool isStale  = g_uiState.isStale;
+    bool isRacing = g_uiState.isRacing;
+    int  liveTime = g_uiState.liveTime;
     UI::PushStyleColor(UI::Col::WindowBg, lapGradientEnabled ? vec4(0, 0, 0, 0) : lapWindowBgColor);
     UI::PushStyleColor(UI::Col::Text, isStale ? vec4(lapTextColor.x, lapTextColor.y, lapTextColor.z, lapTextColor.w * 0.45f) : lapTextColor);
     UI::Begin("LapTimes", windowFlags);
@@ -45,14 +51,6 @@ void Render() {
     }
     g_lapWinPos  = UI::GetWindowPos();
     g_lapWinSize = UI::GetWindowSize();
-
-    bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished && !isStale;
-    int liveTime = 0;
-    if (isRacing) {
-      // while a run is active, compute a live lap time based on current race time minus the previous lap's finish.
-      liveTime = GetCurrentPlayerRaceTime() - g_state.prevLapRaceTime;
-      if (liveTime < 0) liveTime = 0;
-    }
 
     if (lapTableTransposed) RenderLapTableTransposed(isRacing, liveTime);
     else                    RenderLapTableNormal(isRacing, liveTime);
@@ -64,6 +62,5 @@ void Render() {
   } // if (showLapWindow)
 
   RenderCpTable();
-  RenderDebugState();
 }
 

@@ -37,19 +37,6 @@ void ArchiveCurrentRun() {
   g_state.history.UpsertAttempt(src);
 }
 
-// Archive valid in-progress attempt before ResetRace on restart; returns attempt for bests handoff.
-Attempt@ TryArchivePreviousAttemptForRestart() {
-  Attempt@ attemptForBests = null;
-  if (g_state.hasPlayerRaced) {
-    @g_state.previousAttempt = g_state.currentAttempt;
-    attemptForBests = ArchiveCurrentAttempt();
-    g_state.currentAttemptId++;
-    g_state.hasPlayerRaced = false;
-    PrintOnce("Attempt saved");
-  }
-  return attemptForBests;
-}
-
 void PersistCurrentRun() {
   ArchiveCurrentRun();
   g_state.history.SaveData();

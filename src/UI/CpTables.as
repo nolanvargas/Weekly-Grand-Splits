@@ -9,7 +9,7 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
       UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
     }
 
-    Attempt@ disp = g_state.GetDisplayAttempt();
+    Attempt@ disp = g_uiState.displayAttempt;
     // 10 lap rows
     for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
       UI::TableNextRow();
@@ -53,7 +53,7 @@ void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int col
       UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + (lapIdx + 1));
     }
 
-    Attempt@ disp = g_state.GetDisplayAttempt();
+    Attempt@ disp = g_uiState.displayAttempt;
     // one row per CP
     for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
       UI::TableNextRow();
@@ -96,7 +96,7 @@ void RenderCpTable() {
   if (map is null || map.MapInfo.MapUid == "") return;
 
   // Determine column count from data.
-  Attempt@ disp = g_state.GetDisplayAttempt();
+  Attempt@ disp = g_uiState.displayAttempt;
   int numCols = g_state.numCps;
   if (disp !is null) {
     for (uint lapIdx = 0; lapIdx < disp.laps.Length; lapIdx++) {
@@ -123,7 +123,7 @@ void RenderCpTable() {
     windowFlags |= UI::WindowFlags::NoInputs;
   }
 
-  bool isStale = g_state.IsStale();
+  bool isStale = g_uiState.isStale;
   g_fmtThousandths = cpUseThousandths;
   UI::PushFont(cpFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : cpFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
   UI::PushFontSize(cpFontSize);
@@ -138,7 +138,7 @@ void RenderCpTable() {
   g_cpWinPos  = UI::GetWindowPos();
   g_cpWinSize = UI::GetWindowSize();
 
-  bool isRacing = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished && !g_state.IsStale();
+  bool isRacing = g_uiState.isRacing;
   // precompute best-ever per CP position across all laps (mode 3).
   // Note: GetCpRefTime now reads DeltaBestAllTime directly from Bests, but we still pass an array for compatibility.
   array<int> bestEverCp;
