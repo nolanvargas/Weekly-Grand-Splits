@@ -29,14 +29,13 @@ class GameState {
   bool pendingAttemptCommenced = false;
   bool pendingWaypointUpdate = false;
 
-  // True when displaying old/stale data: player is restarting with data from a previous run,
-  // but no new checkpoint has arrived yet to replace it.
+  // Returns true when the UI is displaying data from a previous run.
   bool IsStale() {
     bool stale = resetData || previousAttempt !is null;
     return stale;
   }
 
-  // Constructor
+  // Constructs a GameState and initializes the history and bests objects.
   GameState() {
     history = RaceHistory();
     @bests = Bests();
@@ -44,6 +43,7 @@ class GameState {
 
   // --- Player event hooks ---
 
+  // Handles map change by resetting state and triggering waypoint update.
   void OnMapChanged(const string &in mapId) {
     LogEventPlayer("Map changed: " + mapId);
     ResetCommon();
@@ -57,7 +57,8 @@ class GameState {
     }
   }
 
-  void onMapLeave() {
+  // Handles map exit by clearing the current map and race state.
+  void OnMapLeave() {
     LogEventPlayer("Map left");
     pendingAttemptCommenced = false;
     waitForCarReset = true;
@@ -66,7 +67,7 @@ class GameState {
     notInMultiLapMap = true;
   }
 
-  // Called immediately on map change and retried each frame until playground is ready.
+  // Completes the pending waypoint update once the playground is ready.
   void TryCompleteWaypointUpdate() {
     if (!pendingWaypointUpdate) return;
     if (GetPlayground() is null) return;
@@ -82,6 +83,7 @@ class GameState {
     LogEventPlayer("Checkpoints: " + numCps + ", Laps: " + numLaps);
   }
 
+  // Resets per-run state and saves the previous attempt for display.
   void OnNewAttempt() {
     LogEventPlayer("New attempt started");
     currentLap = 0;
@@ -90,12 +92,16 @@ class GameState {
     currentAttemptId++;
     g_state.resetData = true;
 
-    @previousAttempt = currentAttempt;
-    bests.ComputeFromHistory(history, numLaps, numCps);
+    // no need to persist the previous attempt if it has no checkpoints
+    if (currentAttempt !is null && currentAttempt.HasAnyCheckpoints()) {
+      @previousAttempt = currentAttempt;
+      bests.ComputeFromHistory(history, numLaps, numCps);
+    }
     g_uiState.OnNewAttempt(previousAttempt);
     @currentAttempt = Attempt(currentAttemptId, numLaps);
   }
 
+  // Fires when the player leaves the start line to begin racing.
   void OnAttemptCommenced() {
     LogEventPlayer("Attempt commenced");
     currentLap = 1;
@@ -106,6 +112,7 @@ class GameState {
     lastCP = GetCurrentCheckpoint();
   }
 
+  // Records a checkpoint split and clears the stale display flag.
   void OnCheckpointReached(int cpIndex) {
     // -1 when menu UI appears after race completion, so ignore it.
     if (cpIndex == -1) { return; }
@@ -124,6 +131,7 @@ class GameState {
     lastCpTime = raceTime;
   }
 
+  // Records the closing split for a lap and advances the counter.
   void OnLapFinished() {
     LogEventPlayer("Lap finished");
     lastCP = GetCurrentCheckpoint();
@@ -140,6 +148,7 @@ class GameState {
     }
   }
 
+  // Fires when all laps are done, archiving and flagging the run complete.
   void OnAttemptComplete() {
     LogEventPlayer("Attempt completed");
     if (isFinished) return;
@@ -150,15 +159,17 @@ class GameState {
     CompleteRun(raceTime);
   }
 
+  // Clears the previous attempt reference when a checkpoint is crossed.
   void ClearPreviousOnCheckpointCrossing() {
     @previousAttempt = null;
   }
 
+  // Nulls the current attempt reference, discarding any unsaved lap data.
   void ResetLapTimes() {
     @currentAttempt = null;
   }
 
-
+  // Saves the finish time and archives the completed run to history.
   void CompleteRun(int raceTime) {
     finishRaceTime = raceTime;
     ArchiveCurrentAttempt();

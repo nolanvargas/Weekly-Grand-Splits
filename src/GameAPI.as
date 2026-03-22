@@ -1,7 +1,9 @@
+// Returns the current arena client or null if unavailable.
 CSmArenaClient @GetPlayground() {
   return cast<CSmArenaClient>(GetApp().CurrentPlayground);
 }
 
+// Returns the current absolute game clock in milliseconds or -1.
 int GetCurrentGameTime() {
   auto pg = GetPlayground();
   if (pg is null || pg.Interface is null ||
@@ -11,34 +13,38 @@ int GetCurrentGameTime() {
   return pg.Interface.ManialinkScriptHandler.GameTime;
 }
 
+// Returns the local player or null if not in race.
 CSmPlayer @GetPlayer() {
   auto pg = GetPlayground();
   if (pg is null || pg.GameTerminals.Length != 1) return null;
   return cast<CSmPlayer>(pg.GameTerminals[0].GUIPlayer);
 }
 
+// Returns the script API for the local player or null.
 CSmScriptPlayer @GetPlayerScript() {
   CSmPlayer @player = GetPlayer();
   return player is null ? null : cast<CSmScriptPlayer>(player.ScriptAPI);
 }
 
+// Returns true when the player is spawned and ready to race.
 bool IsPlayerReady() {
   CSmScriptPlayer @scriptPlayer = GetPlayerScript();
   return scriptPlayer !is null && GetCurrentPlayerRaceTime() >= 0 &&
          scriptPlayer.Post == CSmScriptPlayer::EPost::CarDriver && GetSpawnCheckpoint() != -1;
 }
 
+// Returns elapsed race time in milliseconds for the local player.
 int GetCurrentPlayerRaceTime() {
   return GetCurrentGameTime() - GetPlayerStartTime();
 }
 
+// Returns checkpoint time from the UI label, falling back to race time.
 int GetPlayerCheckpointTime() {
   int uiTime = GetUICheckpointTime();
   return uiTime == -1 ? GetCurrentPlayerRaceTime() : uiTime;
 }
 
-// Reads the checkpoint time from the game's own Race_Checkpoint UI label.
-// Returns -1 if the UI is unavailable; falls back to GetCurrentPlayerRaceTime().
+// Reads the race checkpoint time from the game's own UI label.
 int GetUICheckpointTime() {
   CGameCtnNetwork@ network = GetApp().Network;
   if (network is null) return -1;
@@ -61,7 +67,7 @@ int GetUICheckpointTime() {
   return ParseTimeString(label.Value);
 }
 
-// Parses "M:SS.mmm" into milliseconds. Returns -1 on failure.
+// Parses a M:SS.mmm time string into total milliseconds or -1.
 int ParseTimeString(const string &in s) {
   int colon = s.IndexOf(":");
   int dot   = s.IndexOf(".");
@@ -72,15 +78,18 @@ int ParseTimeString(const string &in s) {
   return (minutes * 60 + seconds) * 1000 + millis;
 }
 
+// Returns the absolute game time when the current run began.
 int GetPlayerStartTime() {
   CSmPlayer @player = GetPlayer();
   return player is null ? -1 : player.StartTime;
 }
 
+// Returns the race-zero game time by subtracting current race time.
 int GetActualPlayerStartTime() {
   return GetPlayerStartTime() - GetCurrentPlayerRaceTime();
 }
 
+// Returns the player's current launched respawn landmark index or -1.
 int GetCurrentCheckpoint() {
   CSmPlayer @player = GetPlayer();
   return player is null ? -1 : player.CurrentLaunchedRespawnLandmarkIndex;

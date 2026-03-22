@@ -1,7 +1,6 @@
 // Conversion helpers between raw 2D arrays and rich race types (Checkpoint / Lap / Attempt live in sibling .as files).
 
-// Extracts [lap][cp] CP times from a Race into a raw 2D array.
-// Laps and CPs start at 1; index 0 is phantom. Output is 0-based (for JSON).
+// Extracts lap CP times from an attempt into a zero-based 2D array.
 array<array<int>> LapArraysFromRace(Attempt@ race) {
   array<array<int>> result;
   for (uint lapIndex = 1; lapIndex < race.laps.Length; lapIndex++) { // Laps start at 1

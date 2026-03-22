@@ -11,6 +11,7 @@ class Bests {
 
   Bests() {}
 
+  // Resets all best references and cached lap and CP counts.
   void Clear() {
     @bestSingleAttempt = null;
     @bestSingleLap = null;
@@ -21,11 +22,13 @@ class Bests {
     _numCps = 0;
   }
 
+  // Returns true if the lap has all expected checkpoints filled.
   bool IsLapComplete(Lap@ lap) const {
     if (_numCps <= 0) return false;
     return int(lap.checkpoints.Length) == _numCps + 1; // phantom at [0] + numCps real; CPs start at 1
   }
 
+  // Returns true if all laps in the attempt are complete.
   bool IsAttemptComplete(Attempt@ attempt) const {
     if (_numLaps <= 0 ) return false;
     if (int(attempt.laps.Length) <= _numLaps) return false; // needs phantom [0] + numLaps real
@@ -36,6 +39,7 @@ class Bests {
     return true;
   }
 
+  // Returns the summed lap time for a complete attempt or -1.
   int AttemptTotalIfComplete(Attempt@ attempt) const {
     if (!IsAttemptComplete(attempt)) return -1;
     int total = 0;
@@ -46,7 +50,7 @@ class Bests {
     return total;
   }
 
-  // Computes all best references from archived attempt data.
+  // Recomputes all best references by scanning the full race history.
   void ComputeFromHistory(RaceHistory@ history, int numLaps, int numCps) {
     Clear();
 
@@ -147,8 +151,7 @@ class Bests {
     @bestCpByCpLapIndex = cpByLapIndex;
   }
 
-  // Incrementally updates best caches from a single archived attempt.
-  // This is used so we do not recompute/adjust best references during an active run.
+  // Incrementally updates all best caches from a single archived attempt.
   void UpdateFromAttempt(Attempt@ attempt) {
     // Ensure reference containers exist.
     if (bestAnyCp is null || int(bestAnyCp.checkpoints.Length) != _numCps + 1) { // phantom + numCps real; CPs start at 1
@@ -232,7 +235,7 @@ class Bests {
     }
   }
 
-  // PB lap totals for DeltaPB comparison (return -1 when missing). lapIdx is 1-based.
+  // Returns the PB lap total for the given lap index or -1.
   int GetBestSingleAttemptLapTotal(int lapIdx) const {
     if (bestSingleAttempt is null) return -1;
     if (lapIdx < 1 || lapIdx > _numLaps) return -1;
@@ -242,7 +245,7 @@ class Bests {
     return lap.GetLapTime();
   }
 
-  // Best lap totals by lap index (property 4). Return 0 when missing. lapIdx is 1-based.
+  // Returns the best recorded lap time at the given lap index.
   int GetBestLapTotalByLapIndex(int lapIdx) const {
     if (bestLapByLapIndex is null) return 0;
     if (lapIdx < 1 || lapIdx > _numLaps) return 0;
@@ -252,7 +255,7 @@ class Bests {
     return lap.GetLapTime();
   }
 
-  // PB cp refs (return 0 when missing). cpIdx is 1-based.
+  // Returns the PB checkpoint time at the given lap and CP.
   int GetBestSingleAttemptCpTime(int lapIdx, int cpIdx) const {
     if (bestSingleAttempt is null) return 0;
     if (lapIdx < 1 || lapIdx > _numLaps) return 0;
@@ -262,7 +265,7 @@ class Bests {
     return lap.GetCheckpointTime(cpIdx);
   }
 
-  // Best cp per (lapIdx, cpIdx) (property 5). Return 0 when missing. cpIdx is 1-based.
+  // Returns the best time for the given lap and CP slot.
   int GetBestCpByCpLapIndexTime(int lapIdx, int cpIdx) const {
     if (bestCpByCpLapIndex is null) return 0;
     if (lapIdx < 1 || lapIdx > _numLaps) return 0;
@@ -272,7 +275,7 @@ class Bests {
     return lap.GetCheckpointTime(cpIdx);
   }
 
-  // Best cp across any lap for cpIdx (property 3). Return 0 when missing. cpIdx is 1-based.
+  // Returns the all-time best CP time at the given CP index.
   int GetBestAnyCpTime(int cpIdx) const {
     if (bestAnyCp is null) return 0;
     if (cpIdx < 1 || cpIdx >= int(bestAnyCp.checkpoints.Length)) return 0;

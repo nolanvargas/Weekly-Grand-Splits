@@ -1,5 +1,4 @@
-// Renders the lap table in vertical form: one row per lap.
-// Shows completed laps, the currently active lap with live delta, and a total row.
+// Renders lap splits vertically with one row per lap and a total.
 void RenderLapTableNormal(bool isRacing, int liveTime) {
   if (UI::BeginTable("splits", 3, UI::TableFlags::SizingFixedFit)) {
     UI::TableNextColumn(); SetMinWidth(styleColWidthLap);   UI::Text("Lap");
@@ -56,8 +55,7 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
   }
 }
 
-// Renders the lap table transposed: one column per lap.
-// Useful when horizontal space is available and many laps are visible at once.
+// Renders the lap table transposed with one column per lap.
 void RenderLapTableTransposed(bool isRacing, int liveTime) {
   // cols: label | Lap1..numLaps | Total
   if (UI::BeginTable("splits_t", 1 + g_uiState.numLaps + 1, UI::TableFlags::SizingFixedFit)) {

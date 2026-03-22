@@ -1,8 +1,4 @@
-// Snapshots the current run's complete laps into the historical archive
-// before the run is cleared. Must be called before ResetRace().
-// A run is considered a valid attempt once the player has reached
-// at least the first checkpoint of lap 1, which is when the first
-// entry is written into the current Attempt's lap/cp checkpoint times.
+// Snapshots completed laps from the current run into history archive.
 Attempt@ ArchiveCurrentAttempt() {
   // We only archive completed laps.
   int completedLapsCount = g_state.currentLap; // laps are completed when currentLap points to the next one
@@ -29,14 +25,14 @@ Attempt@ ArchiveCurrentAttempt() {
   return attempt;
 }
 
-// Upserts the full current-run state (including in-progress lap) into history.
-// Called at every checkpoint so mid-run data survives a crash or reload.
+// Upserts the full current run including the in-progress lap to history.
 void ArchiveCurrentRun() {
   Attempt@ src = g_state.currentAttempt;
   if (src is null || src.laps.Length <= 0) return;
   g_state.history.UpsertAttempt(src);
 }
 
+// Archives the current run state and saves history to disk.
 void PersistCurrentRun() {
   ArchiveCurrentRun();
   g_state.history.SaveData();

@@ -7,8 +7,7 @@ void ResetCommon() {
   @g_state.previousAttempt = null;
 }
 
-// Clears only the current run data while keeping history and PBs.
-// Called when starting a new attempt on the same map.
+// Resets active run data while keeping history and PB caches.
 void ResetRace(Attempt@ previousAttemptForBests) {
   // Update best reference caches only at run boundaries.
   // This keeps UI comparisons stale during the active run.
@@ -24,4 +23,3 @@ void ResetRace(Attempt@ previousAttemptForBests) {
 
   g_state.lastCP = GetSpawnCheckpoint();
 }
-

@@ -2,18 +2,20 @@ class Lap {
   int lapNumber = 0;
   array<Checkpoint@> checkpoints;
 
+  // Creates an empty lap and initializes an empty checkpoint array.
   Lap() { checkpoints = {}; }
 
-  Lap(int index, int cp_qty) {
+  // Constructs a lap with a phantom slot and cpQty real checkpoints.
+  Lap(int index, int cpQty) {
     lapNumber = index < 0 ? 0 : index;
     checkpoints = {};
     checkpoints.InsertLast(Checkpoint()); // phantom at index 0; CPs start at 1
-    for (int checkpointSlot = 1; checkpointSlot <= cp_qty; checkpointSlot++) {
+    for (int checkpointSlot = 1; checkpointSlot <= cpQty; checkpointSlot++) {
       checkpoints.InsertLast(Checkpoint());
     }
   }
 
-  // from JSON (cpIndex in row is 0-based; stored 1-based internally)
+  // Deserializes a lap from a JSON array of checkpoint times.
   Lap(int lapIndex, Json::Value@ row) {
     lapNumber = lapIndex;
     checkpoints = {};
@@ -23,7 +25,7 @@ class Lap {
     }
   }
 
-  // cpIndex is 1-based
+  // Returns the checkpoint split time at the given one-based index.
   int GetCheckpointTime(int cpIndex) const {
     if (cpIndex < 1 || cpIndex >= int(checkpoints.Length)) {
       throw("GetCheckpointTime: checkpoint index out of range (index=" + cpIndex + ", count=" + checkpoints.Length + ")");
@@ -31,16 +33,16 @@ class Lap {
     return checkpoints[cpIndex].time;
   }
 
-  // Sums all real CP times (skips phantom at index 0).
+  // Sums all real checkpoint times, skipping the phantom at index zero.
   int GetLapTime() const {
     int total = 0;
-    for (uint cp_idx = 1; cp_idx < checkpoints.Length; cp_idx++) { // CPs start at 1
-      total += checkpoints[cp_idx].time;
+    for (uint cpIdx = 1; cpIdx < checkpoints.Length; cpIdx++) { // CPs start at 1
+      total += checkpoints[cpIdx].time;
     }
     return total;
   }
 
-  // Next sequential split (e.g. live run). Inserts phantom on first call.
+  // Appends the next sequential split to this lap's checkpoint list.
   void AppendCheckpointTime(int splitMs) {
     if (checkpoints.Length == 0) {
       checkpoints.InsertLast(Checkpoint()); // phantom at index 0; CPs start at 1
@@ -48,7 +50,7 @@ class Lap {
     checkpoints.InsertLast(Checkpoint(splitMs));
   }
 
-  // Overwrite an existing split, or append the next split. cpIndex is 1-based. No sparse gaps.
+  // Overwrites or appends a checkpoint time at the given index.
   void SetCheckpointTime(int cpIndex, int time) {
     if (cpIndex < 1) {
       throw("SetCheckpointTime: checkpoint index must be >= 1 (value=" + cpIndex + ")");

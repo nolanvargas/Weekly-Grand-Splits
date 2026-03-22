@@ -1,4 +1,4 @@
-// Draws a simple linear or radial gradient behind a UI window.
+// Draws a linear or radial gradient background behind a UI window.
 void DrawGradientBg(vec2 pos, vec2 size, bool radial, vec4 color1, vec4 color2) {
   nvg::BeginPath();
   nvg::Rect(pos.x, pos.y, size.x, size.y);
@@ -22,15 +22,13 @@ void DrawGradientBg(vec2 pos, vec2 size, bool radial, vec4 color1, vec4 color2) 
   nvg::Fill();
 }
 
-// Chooses a text color for lap deltas based on sign and whether a PB exists.
-// Negative (faster) deltas are green, positive (slower) are red.
+// Returns green or red based on lap delta sign and PB availability.
 vec4 GetLapDeltaColor(int delta, bool hasBest) {
   if (!hasBest || delta == 0) return COLOR_WHITE;
   return delta < 0 ? COLOR_GREEN : COLOR_RED;
 }
 
-// Chooses a text color for live deltas while a lap is in progress.
-// Mirrors the semantics of GetLapDeltaColor but for in-progress laps.
+// Returns a color for a live in-progress lap delta against best.
 vec4 GetLiveDeltaColor(int liveDelta) {
   if (liveDelta < 0) return COLOR_GREEN;
   if (liveDelta > 0) return COLOR_RED;
@@ -38,8 +36,7 @@ vec4 GetLiveDeltaColor(int liveDelta) {
   return COLOR_GRAY;
 }
 
-// Renders a single CP cell from pre-computed CpCellData.
-// Shows absolute time or delta depending on g_uiState.cpDeltaMode.
+// Renders one CP cell showing absolute time or a delta value.
 void RenderCpCell(CpCellData@ cell) {
   if (!g_uiState.cpDeltaMode || cell.refTime == 0) { UI::Text(FormatCpTime(cell.cpTime)); return; }
   int delta = cell.cpTime - cell.refTime;
@@ -49,8 +46,7 @@ void RenderCpCell(CpCellData@ cell) {
   UI::PopStyleColor();
 }
 
-// Ensures a minimum width for the next table column.
-// This works by inserting a dummy item with the desired width.
+// Enforces a minimum column width by inserting a zero-height dummy item.
 void SetMinWidth(int width) {
   UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(0, 0));
   UI::Dummy(vec2(width, 0));
@@ -60,6 +56,7 @@ void SetMinWidth(int width) {
 
 // --- JSON helpers (used only by RaceHistory disk format) ---
 
+// Converts a 2D array of lap CP times into nested JSON arrays.
 Json::Value@ BuildLapsJson2D(const array<array<int>>@ data) {
   Json::Value@ outer = Json::Array();
   for (uint rowIndex = 0; rowIndex < data.Length; rowIndex++) {
@@ -72,6 +69,7 @@ Json::Value@ BuildLapsJson2D(const array<array<int>>@ data) {
   return outer;
 }
 
+// Returns the storage file path for the given map's history JSON.
 string MapRaceHistoryJsonPath(const string&in mapId) {
   IO::CreateFolder(IO::FromStorageFolder("maps"));
   return IO::FromStorageFolder("maps/" + mapId + ".json");

@@ -3,6 +3,7 @@ vec2 g_cpWinSize;
 vec2 anchor = vec2(0, 780);
 vec2 anchorCp = vec2(300, 780);
 
+// Navigates to and opens the plugin settings in the overlay.
 void OpenMySettings() {
     auto plugins = Meta::AllPlugins();
     for (uint i = 0; i < plugins.Length; i++) {
@@ -13,8 +14,7 @@ void OpenMySettings() {
     }
 }
 
-// Entry point copied and adapted from:
-//   https://github.com/Phlarx/tm-ultimate-medals
+// Main render entry point for the lap and CP windows.
 void Render() {
   auto app = cast<CTrackMania>(GetApp());
 
@@ -43,7 +43,7 @@ void Render() {
       windowFlags |= UI::WindowFlags::NoInputs;
     }
 
-    g_fmtDecimals = lapDecimals;
+    g_fmtDecimals = int(lapPrecision);
     g_fmtRoundUp  = lapRoundUp;
     UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
     UI::PushFontSize(lapFontSize);
@@ -81,7 +81,7 @@ void Render() {
     if (lapTableTransposed) RenderLapTableTransposed(isRacing, liveTime);
     else                    RenderLapTableNormal(isRacing, liveTime);
 
-    if (UI::IsOverlayShown()) {
+    if (UI::IsOverlayShown() && !lapHideSettingsButton) {
         UI::Dummy(vec2(0, 2));
         UI::PushStyleColor(UI::Col::Button,        vec4(0, 0, 0, 0));
         UI::PushStyleColor(UI::Col::ButtonActive,  vec4(1, 1, 1, 0.15f));

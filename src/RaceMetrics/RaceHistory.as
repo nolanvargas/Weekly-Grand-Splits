@@ -3,18 +3,21 @@ class RaceHistory {
 
   RaceHistory() {}
 
+  // Removes all stored attempts, resetting the race history to empty.
   void Clear() {
     _attempts.RemoveRange(0, _attempts.Length);
   }
 
-
+  // Returns the total number of attempts stored in this history.
   uint GetAttemptCount() const { return _attempts.Length; }
 
+  // Returns the attempt at the given index, throwing on out-of-bounds.
   Attempt@ GetAttemptByIndex(uint idx) {
     if (idx >= _attempts.Length) throw("GetAttemptByIndex: index out of range (index=" + idx + ", count=" + _attempts.Length + ")");
     return _attempts[idx];
   }
 
+  // Appends a normalized copy of the source attempt to history.
   void AddAttempt(Attempt@ src) {
     Attempt@ at = Attempt();
     array<array<int>> lapCp = LapArraysFromRace(src);
@@ -28,6 +31,7 @@ class RaceHistory {
     _attempts.InsertLast(at);
   }
 
+  // Replaces a matching attempt by ID or appends if not found.
   void UpsertAttempt(Attempt@ src) {
     for (uint attemptSlot = 0; attemptSlot < _attempts.Length; attemptSlot++) {
       if (_attempts[attemptSlot].attemptId == src.attemptId) {
@@ -47,9 +51,7 @@ class RaceHistory {
     AddAttempt(src);
   }
 
-  // If a player does not reach any checkpoints, we may end up with an empty attempt
-  // (e.g. if they quit immediately after starting). We are not recording these attempts
-  // so the length of the array is not a reliable attempt count
+  // Returns one above the highest stored attempt ID in history.
   int ComputeNextAttemptId() const {
     int maxId = 0;
     for (uint i = 0; i < _attempts.Length; i++) {
@@ -58,6 +60,7 @@ class RaceHistory {
     return maxId;
   }
 
+  // Serializes all stored attempts into a JSON object for saving.
   Json::Value@ ToJson() {
     Json::Value@ root = Json::Object();
     Json::Value@ attArr = Json::Array();
@@ -73,6 +76,7 @@ class RaceHistory {
     return root;
   }
 
+  // Populates history from a parsed JSON object, replacing existing data.
   void FromJson(Json::Value@ root) {
     Clear();
     if (root is null || !root.HasKey("attempts")) return;
@@ -82,31 +86,34 @@ class RaceHistory {
     }
   }
 
+  // Writes the history JSON for the given map to disk.
   void SaveToFile(const string&in mapId, int numCps) {
     if (mapId == "" || numCps == 0) return;
     if (_attempts.Length == 0) return;
     Json::ToFile(MapRaceHistoryJsonPath(mapId), ToJson(), true);
   }
 
+  // Loads history from disk for the given map, returns success.
   bool TryLoadFromFile(const string&in mapId) {
     string jsonPath = MapRaceHistoryJsonPath(mapId);
     if (!IO::FileExists(jsonPath)) return false;
 
     Json::Value@ data = Json::FromFile(jsonPath);
     if (data is null) return false;
-    
+
     FromJson(data);
 
     return true;
   }
 
-  // Clears history and related session fields on g_state (no JSON).
+  // Clears history and resets bests on g_state without touching disk.
   void InitEmptyState() {
     Clear();
     g_state.bests.Clear();
     @g_state.previousAttempt = null;
   }
 
+  // Loads stored history from disk or initializes an empty state.
   void LoadData(const string &in mapId) {
     if (mapId == "" || !TryLoadFromFile(mapId)) {
       InitEmptyState();
@@ -115,6 +122,7 @@ class RaceHistory {
     g_state.bests.ComputeFromHistory(g_state.history, g_state.numLaps, g_state.numCps);
   }
 
+  // Saves the current history data to disk for the active map.
   void SaveData() {
     SaveToFile(GetMapId(), g_state.numCps);
   }

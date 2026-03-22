@@ -47,17 +47,17 @@ class UIState {
   int  totalDelta     = 0;
   vec4 totalColor;
 
-  // Called by GameState.OnNewAttempt() — UI switches to previousAttempt (stale display).
+  // Switches the display to the previous attempt on new attempt start.
   void OnNewAttempt(Attempt@ prev) {
     @displayAttempt = prev;
   }
 
-  // Called by GameState.OnCheckpointReached() — first CP clears stale display.
+  // Switches the display to the current attempt on checkpoint crossing.
   void OnCheckpointReached(Attempt@ current) {
     @displayAttempt = current;
   }
 
-  // Called by GameState.OnMapChanged() / TryCompleteWaypointUpdate() / ResetCommon().
+  // Clears all display state on map change or waypoint update.
   void OnReset() {
     @displayAttempt = null;
     isStale  = false;
@@ -68,7 +68,7 @@ class UIState {
     numCpCols = 0;
   }
 
-  // Called once per Render() frame to refresh derived values.
+  // Refreshes all derived display values from game state each frame.
   void Update() {
     @bests      = g_state.bests;
     currentLap  = g_state.currentLap;
@@ -116,7 +116,7 @@ class UIState {
     ComputeCpData(cpAttempt);
   }
 
-  // Computes per-lap display data and total row values.
+  // Computes per-lap display values and the total row for rendering.
   private void ComputeLapData(Attempt@ att) {
     lapData.Resize(numLaps + 1); // index 0 unused; laps start at 1
 
@@ -159,7 +159,7 @@ class UIState {
     totalColor     = GetLapDeltaColor(totalDelta, showTotalDelta);
   }
 
-  // Computes per-cell CP display data for all lap/cp combinations.
+  // Computes per-cell CP display values for all lap and CP pairs.
   private void ComputeCpData(Attempt@ att) {
     numCpCols = numCps;
     if (att !is null) {
@@ -196,7 +196,7 @@ class UIState {
     }
   }
 
-  // Resolves the reference time for a (lapIdx, cpIdx) cell based on the current display mode.
+  // Returns the reference CP time for a cell based on display mode.
   private int GetCpRefTimeForIdx(int lapIdx, int cpIdx) {
     if (cpDisplayMode == CpDisplayMode::DeltaPB)          return bests.GetBestSingleAttemptCpTime(lapIdx, cpIdx);
     if (cpDisplayMode == CpDisplayMode::DeltaBestLapCp)   return bests.GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
@@ -204,7 +204,7 @@ class UIState {
     return 0;
   }
 
-  // Returns the lap time for lapIdx from the given attempt, or -1 if not available/complete.
+  // Returns the lap time from an attempt or -1 if unavailable.
   private int GetLapTimeFrom(Attempt@ att, int lapIdx) const {
     if (att is null) return -1;
     if (lapIdx < 0 || lapIdx >= int(att.laps.Length)) return -1;

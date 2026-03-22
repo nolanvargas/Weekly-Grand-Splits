@@ -1,5 +1,4 @@
-// Renders the checkpoint split table in vertical form: one row per lap.
-// Each cell shows either absolute CP time or a delta against a chosen reference.
+// Renders the CP table vertically with one data row per lap.
 void RenderCpTableNormal() {
   int numCols  = g_uiState.numCpCols;
   int colWidth = g_uiState.cpDeltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
@@ -29,8 +28,7 @@ void RenderCpTableNormal() {
   }
 }
 
-// Renders the checkpoint split table transposed: one row per CP index.
-// This makes it easier to compare the same CP across laps.
+// Renders the CP table transposed with one row per CP index.
 void RenderCpTableTransposed() {
   int numCols  = g_uiState.numCpCols;
   int colWidth = g_uiState.cpDeltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
@@ -61,8 +59,7 @@ void RenderCpTableTransposed() {
   }
 }
 
-// Top-level CP table window renderer.
-// Handles visibility guards, window placement, and mode selection.
+// Top-level renderer for the CP window with placement and visibility guards.
 void RenderCpTable() {
   if (!cpTableVisible) return;
 
@@ -94,7 +91,7 @@ void RenderCpTable() {
   }
 
   bool isStale = g_uiState.cpIsStale;
-  g_fmtDecimals = cpDecimals;
+  g_fmtDecimals = int(cpPrecision);
   g_fmtRoundUp  = cpRoundUp;
   UI::PushFont(cpFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : cpFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
   UI::PushFontSize(cpFontSize);

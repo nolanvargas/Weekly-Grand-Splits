@@ -17,6 +17,14 @@ enum CpDisplayMode {
   DeltaBestAllTime
 }
 
+enum TimePrecision {
+  Whole,
+  Tenths,
+  Hundredths,
+  Thousandths
+}
+
+// Renders a colored separator text heading for a settings section.
 void Heading(const string &in label, vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f)) {
     UI::PushStyleColor(UI::Col::Text, color);
     UI::SeparatorText(label);
@@ -33,13 +41,6 @@ const vec4 HEADING_GRADIENT   = vec4(0.80f, 0.50f, 1.00f, 1.0f); // violet     â
 [Setting category="Lap Window" name="Visible"]
 bool windowVisible = true;
 
-void S_RenderLapPrecisionTab() {
-    lapDecimals = UI::SliderInt("Decimal places (0-3)", lapDecimals, 0, 3);
-    if (lapDecimals >= 3) lapRoundUp = false;
-    UI::BeginDisabled(lapDecimals >= 3);
-    lapRoundUp = UI::Checkbox("Round-up precision (0.5 \u2192 1)", lapRoundUp);
-    UI::EndDisabled();
-}
 
 [Setting category="Lap Window" name="Transposed (laps as columns)"]
 bool lapTableTransposed = false;
@@ -59,8 +60,11 @@ bool lapShowMapName = false;
 [Setting category="Lap Window" name="Show map author"]
 bool lapShowMapAuthor = false;
 
-[Setting hidden]
-int lapDecimals = 1;
+[Setting category="Lap Window" name="Hide settings button"]
+bool lapHideSettingsButton = false;
+
+[Setting category="Lap Window" name="Time precision"]
+TimePrecision lapPrecision = TimePrecision::Tenths;
 
 [Setting hidden]
 bool lapRoundUp = false;
@@ -103,14 +107,6 @@ int styleColWidthTime = 72;
 [Setting category="CP Window" name="Visible"]
 bool cpTableVisible = true;
 
-void S_RenderCpPrecisionTab() {
-    cpDecimals = UI::SliderInt("Decimal places (0-3)", cpDecimals, 0, 3);
-    if (cpDecimals >= 3) cpRoundUp = false;
-    UI::BeginDisabled(cpDecimals >= 3);
-    cpRoundUp = UI::Checkbox("Round-up precision (0.5 \u2192 1)", cpRoundUp);
-    UI::EndDisabled();
-}
-
 
 
 [Setting category="CP Window" name="Time display mode"]
@@ -128,8 +124,8 @@ bool cpKeepPreviousAttempt = true;
 [Setting category="CP Window" name="Lock window position"]
 bool cpLockPosition = false;
 
-[Setting hidden]
-int cpDecimals = 2;
+[Setting category="CP Window" name="Time precision"]
+TimePrecision cpPrecision = TimePrecision::Hundredths;
 
 [Setting hidden]
 bool cpRoundUp = false;
@@ -175,12 +171,14 @@ bool debugShowStateWindow = false;
 [Setting category="Debug" name="Log: player events (respawn, stale state)"]
 bool debugLogEventPlayer = false;
 
+// Prints a debug message if player event logging is enabled.
 void LogEventPlayer(const string&in msg) {
   if (!debugLogEventPlayer) return;
   print(msg);
 }
 
 [SettingsTab name="Lap Window Colors" icon="PaintBrush"]
+// Settings tab for configuring lap window text and background colors.
 void S_RenderLapColorsTab() {
     if (UI::Button("Reset to default##lap")) {
         lapTextColor       = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -192,24 +190,25 @@ void S_RenderLapColorsTab() {
     }
 
     Heading("Text", HEADING_TEXT);
-    lapTextColor = UI::InputColor4("Text color", lapTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    lapTextColor = UI::InputColor4("Text color", lapTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
 
     Heading("Background", HEADING_BACKGROUND);
     UI::BeginDisabled(lapGradientEnabled);
-    lapWindowBgColor = UI::InputColor4("Background color", lapWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    lapWindowBgColor = UI::InputColor4("Background color", lapWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
     UI::EndDisabled();
 
     Heading("Gradient", HEADING_GRADIENT);
     lapGradientEnabled = UI::Checkbox("Enable gradient background", lapGradientEnabled);
     UI::BeginDisabled(!lapGradientEnabled);
     lapGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", lapGradientRadial);
-    lapGradientColor1 = UI::InputColor4("Color 1 (top / inner)", lapGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
-    lapGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", lapGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    lapGradientColor1 = UI::InputColor4("Color 1 (top / inner)", lapGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    lapGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", lapGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
     UI::EndDisabled();
 
 }
 
 [SettingsTab name="CP Window Colors" icon="PaintBrush"]
+// Settings tab for configuring CP window text and background colors.
 void S_RenderCpColorsTab() {
     if (UI::Button("Reset to default##cp")) {
         cpTextColor       = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -221,19 +220,19 @@ void S_RenderCpColorsTab() {
     }
 
     Heading("Text", HEADING_TEXT);
-    cpTextColor = UI::InputColor4("Text color", cpTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    cpTextColor = UI::InputColor4("Text color", cpTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
 
     Heading("Background", HEADING_BACKGROUND);
     UI::BeginDisabled(cpGradientEnabled);
-    cpWindowBgColor = UI::InputColor4("Background color", cpWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    cpWindowBgColor = UI::InputColor4("Background color", cpWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
     UI::EndDisabled();
 
     Heading("Gradient", HEADING_GRADIENT);
     cpGradientEnabled = UI::Checkbox("Enable gradient background", cpGradientEnabled);
     UI::BeginDisabled(!cpGradientEnabled);
     cpGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", cpGradientRadial);
-    cpGradientColor1 = UI::InputColor4("Color 1 (top / inner)", cpGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
-    cpGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", cpGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf);
+    cpGradientColor1 = UI::InputColor4("Color 1 (top / inner)", cpGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    cpGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", cpGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
     UI::EndDisabled();
 
 }

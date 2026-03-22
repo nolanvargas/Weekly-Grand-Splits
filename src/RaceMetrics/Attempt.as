@@ -2,19 +2,21 @@ class Attempt {
   int attemptId = 0;
   array<Lap@> laps;
 
+  // Constructs a default empty attempt with no laps or ID.
   Attempt() {
     laps = {};
   }
 
-  Attempt(int id, int lap_qty) {
+  // Constructs an attempt with a given ID and pre-built lap slots.
+  Attempt(int id, int lapQty) {
     this.attemptId = id;
     laps = {};
-    for (int lapSlot = 0; lapSlot < lap_qty; lapSlot++) {
+    for (int lapSlot = 0; lapSlot < lapQty; lapSlot++) {
       laps.InsertLast(Lap(lapSlot+1, 0)); // Laps start at 1
     }
   }
 
-  // from JSON
+  // Deserializes an attempt from a JSON object read from disk.
   Attempt(Json::Value@ atObj) {
     laps = {};
     attemptId = int(atObj["id"]);
@@ -25,12 +27,13 @@ class Attempt {
     }
   }
 
+  // Returns the lap object stored at the given one-based index.
   Lap@ GetLap(int lapIndex) const {
     Lap@ lap = laps[lapIndex];
     return lap;
   }
 
-  // Ensures laps[lapIndex] exists (resize + empty Lap) for SetCheckpointTime / AppendCheckpointTime.
+  // Returns or creates the lap at the given index as needed.
   private Lap@ GetOrCreateLap(int lapIndex) {
     if (lapIndex >= int(laps.Length)) {
       laps.Resize(lapIndex + 1);
@@ -43,12 +46,20 @@ class Attempt {
     return lap;
   }
 
-  // Will auto-add new laps as needed
+  // Writes a checkpoint time using zero-based lap and CP indices.
   void SetCheckpointTime(int lapIndex, int cpIndex, int time) {
     GetOrCreateLap(lapIndex+1).SetCheckpointTime(cpIndex+1, time); // Laps and CPs start at 1
   }
 
-  // Next checkpoint reached in a run
+  // Returns true if any lap has at least one real checkpoint recorded.
+  bool HasAnyCheckpoints() const {
+    for (uint i = 0; i < laps.Length; i++) {
+      if (laps[i] !is null && laps[i].checkpoints.Length > 1) return true;
+    }
+    return false;
+  }
+
+  // Appends the next sequential checkpoint split to the current lap.
   void AppendCheckpointTime(int lapIndex, int splitMs) {
     GetOrCreateLap(lapIndex).AppendCheckpointTime(splitMs); // Laps start at 1
   }

@@ -1,8 +1,9 @@
+// Polls game state each frame and dispatches race event handlers.
 void Update(float dt) {
   string mapId = GetMapId();
 
   if (g_state.currentMap != "" && mapId == "") {
-    g_state.onMapLeave();
+    g_state.OnMapLeave();
   }
 
   if (g_state.currentMap != mapId) {

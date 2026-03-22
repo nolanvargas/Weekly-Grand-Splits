@@ -1,3 +1,4 @@
+// Renders the live game state debug overlay window when enabled.
 void RenderDebugState() {
     if (!debugShowStateWindow) return;
 
