@@ -95,22 +95,22 @@
         <mxCell id="0_VCYnxCMihO1faVK7p4-14" value="SaveData" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="380" y="320" width="90" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="0_VCYnxCMihO1faVK7p4-16" value="CompleteLap" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
+        <mxCell id="0_VCYnxCMihO1faVK7p4-16" value="OnLapFinished" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="255" y="320" width="90" height="20" as="geometry" />
         </mxCell>
         <mxCell id="0_VCYnxCMihO1faVK7p4-18" value="CompleteRun" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="200" y="360" width="145" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="0_VCYnxCMihO1faVK7p4-20" value="RecordCheckpoint" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
+        <mxCell id="0_VCYnxCMihO1faVK7p4-20" value="OnCheckpointReached" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="240" y="280" width="105" height="20" as="geometry" />
         </mxCell>
         <mxCell id="0_VCYnxCMihO1faVK7p4-24" value="InitEmptyState" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="620" y="410" width="90" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="0_VCYnxCMihO1faVK7p4-26" value="PopulateStateFromJson" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
+        <mxCell id="0_VCYnxCMihO1faVK7p4-26" value="FromJson" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="530" y="450" width="140" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="0_VCYnxCMihO1faVK7p4-28" value="BuildStateJson" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
+        <mxCell id="0_VCYnxCMihO1faVK7p4-28" value="ToJson" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F3F3;" parent="1" vertex="1">
           <mxGeometry x="380" y="360" width="90" height="20" as="geometry" />
         </mxCell>
       </root>

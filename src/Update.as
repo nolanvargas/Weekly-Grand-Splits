@@ -1,6 +1,4 @@
 void Update(float dt) {
-  BeginLogFrame();
-
   string mapId = GetMapId();
 
   if (g_state.currentMap != "" && mapId == "") {
@@ -11,12 +9,10 @@ void Update(float dt) {
     g_state.OnMapChanged(mapId);
   }
   if (g_state.pendingWaypointUpdate) {
-    LogUpdate("[Update] Waiting for playground (pendingWaypointUpdate)");
     g_state.TryCompleteWaypointUpdate();
     return;
   }
   if (!g_state.isMultiLap) {
-    LogUpdate("[Update] Not in a multi-lap map, plugin inactive");
     return;
   }
   // player restarting || player just loaded into first run
@@ -32,7 +28,6 @@ void Update(float dt) {
 
   if (g_state.waitForCarReset) {
     bool ready = IsPlayerReady();
-    LogUpdate("Waiting for player");
     g_state.waitForCarReset = !ready;
     return;
   }
@@ -40,10 +35,7 @@ void Update(float dt) {
   if (g_state.resetData) {
     if (IsPlayerReady()) {
       g_state.OnAttemptCommenced();
-
-      ResetRace(g_state.currentAttempt);
       g_state.resetData = false;
-
       g_state.playerStartTime = GetActualPlayerStartTime();
     }
     return;

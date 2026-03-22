@@ -1,6 +1,5 @@
 class Attempt {
   int attemptId = 0;
-  bool tracked = false;
   array<Lap@> laps;
 
   Attempt() {
@@ -11,7 +10,7 @@ class Attempt {
     this.attemptId = id;
     laps = {};
     for (int lapSlot = 0; lapSlot < lap_qty; lapSlot++) {
-      laps.InsertLast(Lap(lapSlot, 0));
+      laps.InsertLast(Lap(lapSlot+1, 0)); // Laps start at 1
     }
   }
 
@@ -19,9 +18,10 @@ class Attempt {
   Attempt(Json::Value@ atObj) {
     laps = {};
     attemptId = int(atObj["id"]);
+    laps.InsertLast(Lap(0, 0)); // phantom at index 0; Laps start at 1
     Json::Value@ outer = atObj["laps"];
     for (uint lapIndex = 0; lapIndex < outer.Length; lapIndex++) {
-      laps.InsertLast(Lap(int(lapIndex), outer[lapIndex]));
+      laps.InsertLast(Lap(int(lapIndex + 1), outer[lapIndex]));
     }
   }
 
@@ -45,11 +45,11 @@ class Attempt {
 
   // Will auto-add new laps as needed
   void SetCheckpointTime(int lapIndex, int cpIndex, int time) {
-    GetOrCreateLap(lapIndex).SetCheckpointTime(cpIndex, time);
+    GetOrCreateLap(lapIndex+1).SetCheckpointTime(cpIndex+1, time); // Laps and CPs start at 1
   }
 
   // Next checkpoint reached in a run
   void AppendCheckpointTime(int lapIndex, int splitMs) {
-    GetOrCreateLap(lapIndex).AppendCheckpointTime(splitMs);
+    GetOrCreateLap(lapIndex).AppendCheckpointTime(splitMs); // Laps start at 1
   }
 }

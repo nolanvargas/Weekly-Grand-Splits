@@ -38,35 +38,15 @@ vec4 GetLiveDeltaColor(int liveDelta) {
   return COLOR_GRAY;
 }
 
-// Renders a single CP cell either as an absolute time or as a delta to refTime.
-// Colors negative deltas green and positive deltas red.
-void RenderCpCell(int cpTime, int refTime, bool deltaMode) {
-  if (!deltaMode || refTime == 0) { UI::Text(FormatCpTime(cpTime)); return; }
-  // when not in delta mode or without a valid reference, show the raw CP time only.
-  int delta = cpTime - refTime;
+// Renders a single CP cell from pre-computed CpCellData.
+// Shows absolute time or delta depending on g_uiState.cpDeltaMode.
+void RenderCpCell(CpCellData@ cell) {
+  if (!g_uiState.cpDeltaMode || cell.refTime == 0) { UI::Text(FormatCpTime(cell.cpTime)); return; }
+  int delta = cell.cpTime - cell.refTime;
   vec4 color = delta < 0 ? COLOR_GREEN : (delta > 0 ? COLOR_RED : COLOR_WHITE);
   UI::PushStyleColor(UI::Col::Text, color);
   UI::Text(FormatDelta(delta));
   UI::PopStyleColor();
-}
-
-// Resolves the reference time used for CP deltas based on the current mode.
-// Modes:
-// - DeltaPB: per-lap PB splits.
-// - DeltaBestLapCp: best per-lap CP ever.
-// - DeltaBestAllTime: best CP regardless of lap.
-int GetCpRefTime(int lapIdx, int cpIdx, array<int>@ bestEverCp) {
-  if (cpDisplayMode == CpDisplayMode::DeltaPB) {
-    // for DeltaPB, use the per-lap PB split at this [lap, cp] as the reference time when it exists.
-    return g_state.bests.GetBestSingleAttemptCpTime(lapIdx, cpIdx);
-  } else if (cpDisplayMode == CpDisplayMode::DeltaBestLapCp) {
-    // for DeltaBestLapCp, reference the best-ever split for this lap/CP combination from all attempts.
-    return g_state.bests.GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
-  } else if (cpDisplayMode == CpDisplayMode::DeltaBestAllTime) {
-    // for DeltaBestAllTime, compare against the overall best CP split at this CP index, regardless of lap.
-    return g_state.bests.GetBestAnyCpTime(cpIdx);
-  }
-  return 0;
 }
 
 // Ensures a minimum width for the next table column.
@@ -90,19 +70,6 @@ Json::Value@ BuildLapsJson2D(const array<array<int>>@ data) {
     outer.Add(inner);
   }
   return outer;
-}
-
-array<array<int>> ReadLapsJson2D(Json::Value@ outer) {
-  array<array<int>> result;
-  for (uint rowIndex = 0; rowIndex < outer.Length; rowIndex++) {
-    array<int> row;
-    Json::Value@ inner = outer[rowIndex];
-    for (uint colIndex = 0; colIndex < inner.Length; colIndex++) {
-      row.InsertLast(int(inner[colIndex]));
-    }
-    result.InsertLast(row);
-  }
-  return result;
 }
 
 string MapRaceHistoryJsonPath(const string&in mapId) {

@@ -1,9 +1,17 @@
-vec2 g_lapWinPos;
 vec2 g_lapWinSize;
-vec2 g_cpWinPos;
 vec2 g_cpWinSize;
 vec2 anchor = vec2(0, 780);
 vec2 anchorCp = vec2(300, 780);
+
+void OpenMySettings() {
+    auto plugins = Meta::AllPlugins();
+    for (uint i = 0; i < plugins.Length; i++) {
+        if (plugins[i].Name == "Weekly Grand Splits") {
+            Meta::OpenSettings(plugins[i]);
+            return;
+        }
+    }
+}
 
 // Entry point copied and adapted from:
 //   https://github.com/Phlarx/tm-ultimate-medals
@@ -35,11 +43,12 @@ void Render() {
       windowFlags |= UI::WindowFlags::NoInputs;
     }
 
-    g_fmtThousandths = lapUseThousandths;
+    g_fmtDecimals = lapDecimals;
+    g_fmtRoundUp  = lapRoundUp;
     UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
     UI::PushFontSize(lapFontSize);
-    if (lapGradientEnabled && g_lapWinSize.x > 0) DrawGradientBg(g_lapWinPos, g_lapWinSize, lapGradientRadial, lapGradientColor1, lapGradientColor2);
-    bool isStale  = g_uiState.isStale;
+    if (lapGradientEnabled && g_lapWinSize.x > 0) DrawGradientBg(anchor, g_lapWinSize, lapGradientRadial, lapGradientColor1, lapGradientColor2);
+    bool isStale  = g_uiState.lapIsStale;
     bool isRacing = g_uiState.isRacing;
     int  liveTime = g_uiState.liveTime;
     UI::PushStyleColor(UI::Col::WindowBg, lapGradientEnabled ? vec4(0, 0, 0, 0) : lapWindowBgColor);
@@ -49,11 +58,36 @@ void Render() {
     if (!lapLockPosition) {
       anchor = UI::GetWindowPos();
     }
-    g_lapWinPos  = UI::GetWindowPos();
     g_lapWinSize = UI::GetWindowSize();
+
+    if (lapShowMapName || lapShowMapAuthor) {
+      if (lapShowMapName) {
+        UI::Text(GetMapName());
+      }
+      if (lapShowMapAuthor) {
+        string author = GetMapAuthor();
+        if (author != "") {
+          vec4 fadedColor = vec4(lapTextColor.x, lapTextColor.y, lapTextColor.z, lapTextColor.w * 0.45f);
+          UI::PushStyleColor(UI::Col::Text, fadedColor);
+          UI::PushFontSize(lapFontSize - 4);
+          UI::Text(author);
+          UI::PopFontSize();
+          UI::PopStyleColor();
+        }
+      }
+      UI::Separator();
+    }
 
     if (lapTableTransposed) RenderLapTableTransposed(isRacing, liveTime);
     else                    RenderLapTableNormal(isRacing, liveTime);
+
+    if (UI::IsOverlayShown()) {
+        UI::Dummy(vec2(0, 2));
+        UI::PushStyleColor(UI::Col::Button,        vec4(0, 0, 0, 0));
+        UI::PushStyleColor(UI::Col::ButtonActive,  vec4(1, 1, 1, 0.15f));
+        if (UI::Button(Icons::Cog)) OpenMySettings();
+        UI::PopStyleColor(2);
+    }
 
     UI::End();
     UI::PopStyleColor(2);

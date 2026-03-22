@@ -1,16 +1,10 @@
 class Checkpoint {
-  int index = -1; // 0-based
-  int time = 0;   // ms
+  int time = 0; // ms
 
   Checkpoint() {}
 
-  Checkpoint(int index) {
-    this.index = index;
-  }
-
-  // from JSON
-  Checkpoint(int index, int time) {
-    this.index = index;
+  Checkpoint(int time) {
+    if (time < 0) throw("Checkpoint time cannot be negative (time=" + time + ")");
     this.time = time;
   }
 }

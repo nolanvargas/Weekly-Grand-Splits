@@ -15,12 +15,12 @@ Attempt@ ArchiveCurrentAttempt() {
   Attempt@ attempt = Attempt();
   attempt.attemptId = g_state.currentAttemptId;
 
-  for (int lapIdx = 0; lapIdx < completedLapsCount && lapIdx < int(srcAttempt.laps.Length); lapIdx++) {
+  for (int lapIdx = 1; lapIdx < completedLapsCount && lapIdx < int(srcAttempt.laps.Length); lapIdx++) { // Laps start at 1
     Lap@ lap = srcAttempt.GetLap(lapIdx);
     uint cpCount = lap.checkpoints.Length;
-    for (uint cpIdx = 0; cpIdx < cpCount; cpIdx++) {
+    for (uint cpIdx = 1; cpIdx < cpCount; cpIdx++) { // CPs start at 1; skip phantom at 0
       int checkpointTimeMs = lap.GetCheckpointTime(int(cpIdx));
-      attempt.SetCheckpointTime(lapIdx, int(cpIdx), checkpointTimeMs);
+      attempt.SetCheckpointTime(lapIdx - 1, int(cpIdx) - 1, checkpointTimeMs); // SetCheckpointTime takes 0-based indices
     }
   }
 

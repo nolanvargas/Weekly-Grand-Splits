@@ -15,7 +15,6 @@ void RenderDebugState() {
         UI::Text("waitForCarReset:    " + (g_state.waitForCarReset ? "true" : "false"));
         UI::Text("resetData:          " + (g_state.resetData ? "true" : "false"));
         UI::Text("isFinished:         " + (g_state.isFinished ? "true" : "false"));
-        UI::Text("hasPlayerRaced:     " + (g_state.hasPlayerRaced ? "true" : "false"));
         UI::Text("IsStale():          " + (g_state.IsStale() ? "true" : "false"));
         UI::Text("lastCP:             " + g_state.lastCP);
         UI::Text("prevLapRaceTime:    " + g_state.prevLapRaceTime + " ms");
@@ -41,12 +40,31 @@ void RenderDebugState() {
             UI::Text("currentAttempt: null");
         } else {
             UI::Text("lapCount:       " + atm.laps.Length);
-            for (uint lapSlot = 0; lapSlot < atm.laps.Length; lapSlot++) {
+            for (uint lapSlot = 1; lapSlot < atm.laps.Length; lapSlot++) {
                 Lap@ lap = atm.GetLap(int(lapSlot));
-                UI::Text("  lap[" + (lapSlot + 1) + "] cps=" + lap.checkpoints.Length + " time=" + lap.GetLapTime() + " ms");
+                UI::Text("  lap[" + lapSlot + "] cps=" + lap.checkpoints.Length + " time=" + lap.GetLapTime() + " ms");
             }
         }
         UI::Text("previousAttempt:   " + (g_state.previousAttempt is null ? "null" : "present"));
+
+        UI::Separator();
+        UI::Text("--- History ---");
+        UI::Text("attemptCount:   " + g_state.history.GetAttemptCount());
+
+        UI::Separator();
+        UI::Text("--- Bests ---");
+        Bests@ bests = g_state.bests;
+        if (bests is null) {
+            UI::Text("bests: null");
+        } else {
+            UI::Text("_numLaps:            " + bests._numLaps);
+            UI::Text("_numCps:             " + bests._numCps);
+            UI::Text("bestSingleAttempt:   " + (bests.bestSingleAttempt is null ? "null" : "id=" + bests.bestSingleAttempt.attemptId));
+            UI::Text("bestSingleLap:       " + (bests.bestSingleLap is null ? "null" : "time=" + bests.bestSingleLap.GetLapTime() + " ms"));
+            UI::Text("bestAnyCp:           " + (bests.bestAnyCp is null ? "null" : "present"));
+            UI::Text("bestLapByLapIndex:   " + (bests.bestLapByLapIndex is null ? "null" : "present"));
+            UI::Text("bestCpByCpLapIndex:  " + (bests.bestCpByCpLapIndex is null ? "null" : "present"));
+        }
     }
     UI::End();
 }

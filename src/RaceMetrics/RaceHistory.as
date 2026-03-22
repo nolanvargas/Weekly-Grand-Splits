@@ -24,7 +24,7 @@ class RaceHistory {
         at.SetCheckpointTime(int(lapIndex), int(cpIndex), row[cpIndex]);
       }
     }
-    at.attemptId = int(_attempts.Length);
+    at.attemptId = src.attemptId;
     _attempts.InsertLast(at);
   }
 
@@ -47,7 +47,16 @@ class RaceHistory {
     AddAttempt(src);
   }
 
-  int ComputeNextAttemptId() const { return int(_attempts.Length); }
+  // If a player does not reach any checkpoints, we may end up with an empty attempt
+  // (e.g. if they quit immediately after starting). We are not recording these attempts
+  // so the length of the array is not a reliable attempt count
+  int ComputeNextAttemptId() const {
+    int maxId = 0;
+    for (uint i = 0; i < _attempts.Length; i++) {
+      if (_attempts[i].attemptId > maxId) maxId = _attempts[i].attemptId;
+    }
+    return maxId;
+  }
 
   Json::Value@ ToJson() {
     Json::Value@ root = Json::Object();

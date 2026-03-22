@@ -1,39 +1,27 @@
 // Renders the checkpoint split table in vertical form: one row per lap.
 // Each cell shows either absolute CP time or a delta against a chosen reference.
-void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidth, array<int>@ bestEverCp) {
+void RenderCpTableNormal() {
+  int numCols  = g_uiState.numCpCols;
+  int colWidth = g_uiState.cpDeltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
   if (UI::BeginTable("cptable", numCols + 1, UI::TableFlags::SizingFixedFit)) {
     // header row
     UI::TableNextColumn(); SetMinWidth(styleColWidthCpLap); UI::Text("Lap");
-    for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
+    for (int cpIdx = 1; cpIdx <= numCols; cpIdx++) { // CPs start at 1
       UI::TableNextColumn(); SetMinWidth(colWidth);
-      UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
+      UI::Text(cpIdx == numCols ? "Fin" : "CP" + cpIdx);
     }
 
-    Attempt@ disp = g_uiState.displayAttempt;
-    // 10 lap rows
-    for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
+    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextRow();
-      Lap@ lap = null;
-      if (disp !is null && lapIdx < int(disp.laps.Length)) {
-        @lap = disp.GetLap(lapIdx);
-      }
-      // mark rows as completed if we have stored CP splits for that lap, or as active if it is the current in-progress lap.
-      bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && disp !is null && lapIdx < int(disp.laps.Length);
-      bool active    = isRacing && lapIdx == g_state.currentLap;
-
-      if (completed || active) {
-        // for completed or active laps, render each CP cell as either an absolute time or delta vs the chosen reference.
-        UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
-        for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
-          UI::TableNextColumn();
-          if (lap is null || cpIdx >= int(lap.checkpoints.Length)) { UI::Text("-"); continue; }
-          RenderCpCell(lap.GetCheckpointTime(cpIdx), GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
+      UI::TableNextColumn(); UI::Text("" + lapIdx);
+      for (int cpIdx = 1; cpIdx <= numCols; cpIdx++) { // CPs start at 1
+        UI::TableNextColumn();
+        if (lapIdx >= int(g_uiState.cpData.Length) || cpIdx >= int(g_uiState.cpData[lapIdx].Length)) {
+          UI::Text("-"); continue;
         }
-      } else {
-        UI::TableNextColumn(); UI::Text("" + (lapIdx + 1));
-        for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
-          UI::TableNextColumn(); UI::Text("-");
-        }
+        CpCellData@ cell = g_uiState.cpData[lapIdx][cpIdx];
+        if (cell is null || !cell.hasData) { UI::Text("-"); continue; }
+        RenderCpCell(cell);
       }
     }
 
@@ -43,32 +31,29 @@ void RenderCpTableNormal(bool isRacing, int numCols, bool deltaMode, int colWidt
 
 // Renders the checkpoint split table transposed: one row per CP index.
 // This makes it easier to compare the same CP across laps.
-void RenderCpTableTransposed(bool isRacing, int numCols, bool deltaMode, int colWidth, array<int>@ bestEverCp) {
-  // cols: CP label | Lap1..Lap10 = 1 + MAX_LAPS = 11
-  if (UI::BeginTable("cptable_t", 1 + MAX_LAPS, UI::TableFlags::SizingFixedFit)) {
-    // open a transposed CP table where rows are CPs and columns are laps, to compare the same CP across attempts.
-    // header row: "Lap" | 1 | 2 | ... | 10
+void RenderCpTableTransposed() {
+  int numCols  = g_uiState.numCpCols;
+  int colWidth = g_uiState.cpDeltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
+  // cols: CP label | Lap1..numLaps
+  if (UI::BeginTable("cptable_t", 1 + g_uiState.numLaps, UI::TableFlags::SizingFixedFit)) {
+    // header row: blank | 1 | 2 | ... | numLaps
     UI::TableNextColumn(); SetMinWidth(styleColWidthCpAbs); UI::Text("Lap");
-    for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
-      UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + (lapIdx + 1));
+    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+      UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + lapIdx);
     }
 
-    Attempt@ disp = g_uiState.displayAttempt;
     // one row per CP
-    for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
+    for (int cpIdx = 1; cpIdx <= numCols; cpIdx++) { // CPs start at 1
       UI::TableNextRow();
-      UI::TableNextColumn(); UI::Text(cpIdx == numCols - 1 ? "Fin" : "CP" + (cpIdx + 1));
-      for (int lapIdx = 0; lapIdx < MAX_LAPS; lapIdx++) {
+      UI::TableNextColumn(); UI::Text(cpIdx == numCols ? "Fin" : "CP" + cpIdx);
+      for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
         UI::TableNextColumn();
-        bool completed = g_state.GetDisplayLapTime(lapIdx) != -1 && disp !is null && lapIdx < int(disp.laps.Length);
-        bool active    = isRacing && lapIdx == g_state.currentLap;
-        if (!completed && !active) { UI::Text("-"); continue; }
-        Lap@ lap = null;
-        if (disp !is null && lapIdx < int(disp.laps.Length)) {
-          @lap = disp.GetLap(lapIdx);
+        if (lapIdx >= int(g_uiState.cpData.Length) || cpIdx >= int(g_uiState.cpData[lapIdx].Length)) {
+          UI::Text("-"); continue;
         }
-        if (lap is null || cpIdx >= int(lap.checkpoints.Length)) { UI::Text("-"); continue; }
-        RenderCpCell(lap.GetCheckpointTime(cpIdx), GetCpRefTime(lapIdx, cpIdx, bestEverCp), deltaMode);
+        CpCellData@ cell = g_uiState.cpData[lapIdx][cpIdx];
+        if (cell is null || !cell.hasData) { UI::Text("-"); continue; }
+        RenderCpCell(cell);
       }
     }
 
@@ -95,21 +80,6 @@ void RenderCpTable() {
 
   if (map is null || map.MapInfo.MapUid == "") return;
 
-  // Determine column count from data.
-  Attempt@ disp = g_uiState.displayAttempt;
-  int numCols = g_state.numCps;
-  if (disp !is null) {
-    for (uint lapIdx = 0; lapIdx < disp.laps.Length; lapIdx++) {
-      Lap@ lap = disp.laps[lapIdx];
-      if (lap is null) continue;
-      // grow the CP column count to accommodate the longest split list.
-      if (int(lap.checkpoints.Length) > numCols) numCols = int(lap.checkpoints.Length);
-    }
-  }
-  // ensure numCols covers historical splits; even when there are
-  // no recorded CPs yet (numCols == 0), still show the empty window so the user can see that
-  // the map is eligible and the CP overlay is active.
-
   if (cpLockPosition) {
     UI::SetNextWindowPos(int(anchorCp.x), int(anchorCp.y), UI::Cond::Always);
   } else {
@@ -123,11 +93,12 @@ void RenderCpTable() {
     windowFlags |= UI::WindowFlags::NoInputs;
   }
 
-  bool isStale = g_uiState.isStale;
-  g_fmtThousandths = cpUseThousandths;
+  bool isStale = g_uiState.cpIsStale;
+  g_fmtDecimals = cpDecimals;
+  g_fmtRoundUp  = cpRoundUp;
   UI::PushFont(cpFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : cpFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
   UI::PushFontSize(cpFontSize);
-  if (cpGradientEnabled && g_cpWinSize.x > 0) DrawGradientBg(g_cpWinPos, g_cpWinSize, cpGradientRadial, cpGradientColor1, cpGradientColor2);
+  if (cpGradientEnabled && g_cpWinSize.x > 0) DrawGradientBg(anchorCp, g_cpWinSize, cpGradientRadial, cpGradientColor1, cpGradientColor2);
   UI::PushStyleColor(UI::Col::WindowBg, cpGradientEnabled ? vec4(0, 0, 0, 0) : cpWindowBgColor);
   UI::PushStyleColor(UI::Col::Text, isStale ? vec4(cpTextColor.x, cpTextColor.y, cpTextColor.z, cpTextColor.w * 0.45f) : cpTextColor);
   UI::Begin("CpTimes", windowFlags);
@@ -135,26 +106,13 @@ void RenderCpTable() {
   if (!cpLockPosition) {
     anchorCp = UI::GetWindowPos();
   }
-  g_cpWinPos  = UI::GetWindowPos();
   g_cpWinSize = UI::GetWindowSize();
 
-  bool isRacing = g_uiState.isRacing;
-  // precompute best-ever per CP position across all laps (mode 3).
-  // Note: GetCpRefTime now reads DeltaBestAllTime directly from Bests, but we still pass an array for compatibility.
-  array<int> bestEverCp;
-  for (int cpIdx = 0; cpIdx < numCols; cpIdx++) {
-    bestEverCp.InsertLast(g_state.bests.GetBestAnyCpTime(cpIdx));
-  }
-
-  bool deltaMode = cpDisplayMode != CpDisplayMode::Absolute;
-  int colWidth = deltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
-
-  if (cpTableTransposed) RenderCpTableTransposed(isRacing, numCols, deltaMode, colWidth, bestEverCp);
-  else                   RenderCpTableNormal(isRacing, numCols, deltaMode, colWidth, bestEverCp);
+  if (cpTableTransposed) RenderCpTableTransposed();
+  else                   RenderCpTableNormal();
 
   UI::End();
   UI::PopStyleColor(2);
   UI::PopFontSize();
   UI::PopFont();
 }
-

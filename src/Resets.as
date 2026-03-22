@@ -2,10 +2,9 @@
 void ResetCommon() {
   g_state.waitForCarReset = true;
   g_state.resetData = true;
-  ResetRace(null); // TODO: be sure to record previous attempt state
+  ResetRace(null);
   g_state.bests.Clear();
   @g_state.previousAttempt = null;
-  g_state.hasPlayerRaced = false;
 }
 
 // Clears only the current run data while keeping history and PBs.
