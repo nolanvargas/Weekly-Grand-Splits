@@ -134,6 +134,11 @@
 .keys_ai/
 .tokens_ai/
 .auth_ai/
+.claude
+.cursor
+.antigravity
+.codex
+.composer
 *.log
 *.tmp
 *.temp
