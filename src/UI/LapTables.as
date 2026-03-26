@@ -5,7 +5,7 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
     UI::TableNextColumn(); SetMinWidth(styleColWidthDelta); UI::Text("+/-");
     UI::TableNextColumn(); SetMinWidth(styleColWidthTime);  UI::Text("Time");
 
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextRow();
       if (lapIdx >= int(g_uiState.lapData.Length)) break;
       LapDisplayData@ d = g_uiState.lapData[lapIdx];
@@ -56,10 +56,10 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
 // Renders the lap table transposed with one column per lap.
 void RenderLapTableTransposed(bool isRacing, int liveTime) {
   // cols: label | Lap1..numLaps | Total
-  if (UI::BeginTable("splits_t", 1 + g_uiState.numLaps + 1, UI::TableFlags::SizingFixedFit)) {
+  if (UI::BeginTable("splits_t", 1 + g_state.numLaps + 1, UI::TableFlags::SizingFixedFit)) {
     // Header row
     UI::TableNextColumn(); SetMinWidth(styleColWidthDelta);
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextColumn(); SetMinWidth(styleColWidthTime); UI::Text("" + lapIdx);
     }
     UI::TableNextColumn(); SetMinWidth(styleColWidthTime);
@@ -67,7 +67,7 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
     // +/- row
     UI::TableNextRow();
     UI::TableNextColumn(); UI::Text("+/-");
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextColumn();
       if (lapIdx >= int(g_uiState.lapData.Length)) { UI::Text("-"); continue; }
       LapDisplayData@ d = g_uiState.lapData[lapIdx];
@@ -95,7 +95,7 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
     // Time row
     UI::TableNextRow();
     UI::TableNextColumn(); UI::Text("Time");
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextColumn();
       if (lapIdx >= int(g_uiState.lapData.Length)) { UI::Text("-"); continue; }
       LapDisplayData@ d = g_uiState.lapData[lapIdx];

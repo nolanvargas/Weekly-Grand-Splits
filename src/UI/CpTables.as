@@ -10,7 +10,7 @@ void RenderCpTableNormal() {
       UI::Text(cpIdx == numCols ? "Fin" : "CP" + cpIdx);
     }
 
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextRow();
       UI::TableNextColumn(); UI::Text("" + lapIdx);
       for (int cpIdx = 1; cpIdx <= numCols; cpIdx++) { // CPs start at 1
@@ -33,10 +33,10 @@ void RenderCpTableTransposed() {
   int numCols  = g_uiState.numCpCols;
   int colWidth = g_uiState.cpDeltaMode ? styleColWidthCpDelta : styleColWidthCpAbs;
   // cols: CP label | Lap1..numLaps
-  if (UI::BeginTable("cptable_t", 1 + g_uiState.numLaps, UI::TableFlags::SizingFixedFit)) {
+  if (UI::BeginTable("cptable_t", 1 + g_state.numLaps, UI::TableFlags::SizingFixedFit)) {
     // header row: blank | 1 | 2 | ... | numLaps
     UI::TableNextColumn(); SetMinWidth(styleColWidthCpAbs); UI::Text("Lap");
-    for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+    for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
       UI::TableNextColumn(); SetMinWidth(colWidth); UI::Text("" + lapIdx);
     }
 
@@ -44,7 +44,7 @@ void RenderCpTableTransposed() {
     for (int cpIdx = 1; cpIdx <= numCols; cpIdx++) { // CPs start at 1
       UI::TableNextRow();
       UI::TableNextColumn(); UI::Text(cpIdx == numCols ? "Fin" : "CP" + cpIdx);
-      for (int lapIdx = 1; lapIdx <= g_uiState.numLaps; lapIdx++) { // Laps start at 1
+      for (int lapIdx = 1; lapIdx <= g_state.numLaps; lapIdx++) { // Laps start at 1
         UI::TableNextColumn();
         if (lapIdx >= int(g_uiState.cpData.Length) || cpIdx >= int(g_uiState.cpData[lapIdx].Length)) {
           UI::Text("-"); continue;
