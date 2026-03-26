@@ -22,26 +22,33 @@ void DrawGradientBg(vec2 pos, vec2 size, bool radial, vec4 color1, vec4 color2) 
   nvg::Fill();
 }
 
-// Returns green or red based on lap delta sign and PB availability.
-vec4 GetLapDeltaColor(int delta, bool hasBest) {
-  if (!hasBest || delta == 0) return COLOR_WHITE;
+// Returns a color for a delta value.
+// hasBest=false → COLOR_WHITE (no reference to compare against).
+// zeroIsGray=true → COLOR_GRAY on tie (use for live/in-progress deltas); false → COLOR_WHITE.
+vec4 GetDeltaColor(int delta, bool hasBest, bool zeroIsGray) {
+  if (!hasBest || delta == 0) return zeroIsGray ? COLOR_GRAY : COLOR_WHITE;
   return delta < 0 ? COLOR_GREEN : COLOR_RED;
 }
 
-// Returns a color for a live in-progress lap delta against best.
-vec4 GetLiveDeltaColor(int liveDelta) {
-  if (liveDelta < 0) return COLOR_GREEN;
-  if (liveDelta > 0) return COLOR_RED;
-  // for in-progress deltas, color negative (faster) times green, positive (slower) red, and zero gray.
-  return COLOR_GRAY;
+// Returns standard plugin window flags, adding NoInputs when the overlay is hidden.
+int PluginWindowFlags() {
+  int flags =
+      UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
+      UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
+  if (!UI::IsOverlayShown()) flags |= UI::WindowFlags::NoInputs;
+  return flags;
+}
+
+// Returns the color with alpha multiplied by 0.45 (used for stale/dimmed text).
+vec4 FadedAlpha(vec4 c) {
+  return vec4(c.x, c.y, c.z, c.w * 0.45f);
 }
 
 // Renders one CP cell showing absolute time or a delta value.
 void RenderCpCell(CpCellData@ cell) {
   if (!g_uiState.cpDeltaMode || cell.refTime == 0) { UI::Text(FormatCpTime(cell.cpTime)); return; }
   int delta = cell.cpTime - cell.refTime;
-  vec4 color = delta < 0 ? COLOR_GREEN : (delta > 0 ? COLOR_RED : COLOR_WHITE);
-  UI::PushStyleColor(UI::Col::Text, color);
+  UI::PushStyleColor(UI::Col::Text, GetDeltaColor(delta, true, false));
   UI::Text(FormatDelta(delta));
   UI::PopStyleColor();
 }

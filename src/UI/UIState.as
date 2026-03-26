@@ -156,7 +156,7 @@ class UIState {
     hasTotal       = displayTotal > 0 || isFinished;
     showTotalDelta = hasCompletedLap && allHaveBest;
     totalDelta     = showTotalDelta ? (totalRun - bestForCompleted) : 0;
-    totalColor     = GetLapDeltaColor(totalDelta, showTotalDelta);
+    totalColor     = GetDeltaColor(totalDelta, showTotalDelta, false);
   }
 
   // Computes per-cell CP display values for all lap and CP pairs.
