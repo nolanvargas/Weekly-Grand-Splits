@@ -1,9 +1,3 @@
-//visual studio code formatting messes with the [Setting ..] text causing open planet to crash
-//moved to different file to get around that issue
-#if __INTELLISENSE__
-#include "cppIntellisense.h"
-#endif
-
 enum FontStyle {
   Default,
   Bold,
