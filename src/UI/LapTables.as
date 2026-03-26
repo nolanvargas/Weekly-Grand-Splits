@@ -10,9 +10,9 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
       if (lapIdx >= int(g_uiState.lapData.Length)) break;
       LapDisplayData@ d = g_uiState.lapData[lapIdx];
 
+      UI::TableNextColumn(); UI::Text("" + lapIdx);
       if (d.completed) {
-        UI::TableNextColumn(); UI::Text("" + lapIdx);
-        UI::PushStyleColor(UI::Col::Text, GetLapDeltaColor(d.delta, d.hasBest));
+        UI::PushStyleColor(UI::Col::Text, GetDeltaColor(d.delta, d.hasBest, false));
         UI::TableNextColumn(); UI::Text(d.hasBest ? FormatDelta(d.delta) : "-");
         UI::PopStyleColor();
         if (d.isGold) UI::PushStyleColor(UI::Col::Text, COLOR_GOLD);
@@ -20,9 +20,8 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
         if (d.isGold) UI::PopStyleColor();
 
       } else if (d.active) {
-        UI::TableNextColumn(); UI::Text("" + lapIdx);
         if (d.showDelta) {
-          UI::PushStyleColor(UI::Col::Text, GetLiveDeltaColor(d.liveDelta));
+          UI::PushStyleColor(UI::Col::Text, GetDeltaColor(d.liveDelta, true, true));
           UI::TableNextColumn(); UI::Text(FormatDelta(d.liveDelta));
           UI::PopStyleColor();
           UI::TableNextColumn(); UI::Text(FormatTenth(liveTime));
@@ -32,7 +31,6 @@ void RenderLapTableNormal(bool isRacing, int liveTime) {
         }
 
       } else {
-        UI::TableNextColumn(); UI::Text("" + lapIdx);
         UI::TableNextColumn(); UI::Text("-");
         UI::TableNextColumn(); UI::Text("-");
       }
@@ -74,12 +72,12 @@ void RenderLapTableTransposed(bool isRacing, int liveTime) {
       if (lapIdx >= int(g_uiState.lapData.Length)) { UI::Text("-"); continue; }
       LapDisplayData@ d = g_uiState.lapData[lapIdx];
       if (d.completed) {
-        UI::PushStyleColor(UI::Col::Text, GetLapDeltaColor(d.delta, d.hasBest));
+        UI::PushStyleColor(UI::Col::Text, GetDeltaColor(d.delta, d.hasBest, false));
         UI::Text(d.hasBest ? FormatDelta(d.delta) : "-");
         UI::PopStyleColor();
       } else if (d.active) {
         if (d.showDelta) {
-          UI::PushStyleColor(UI::Col::Text, GetLiveDeltaColor(d.liveDelta));
+          UI::PushStyleColor(UI::Col::Text, GetDeltaColor(d.liveDelta, true, true));
           UI::Text(FormatDelta(d.liveDelta));
           UI::PopStyleColor();
         } else {

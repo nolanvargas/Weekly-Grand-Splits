@@ -36,13 +36,6 @@ void Render() {
   if (showLapWindow) {
     UI::SetNextWindowPos(int(anchor.x), int(anchor.y), lapLockPosition ? UI::Cond::Always : UI::Cond::FirstUseEver);
 
-    int windowFlags =
-        UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
-        UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
-    if (!UI::IsOverlayShown()) {
-      windowFlags |= UI::WindowFlags::NoInputs;
-    }
-
     g_fmtDecimals = int(lapPrecision);
     g_fmtRoundUp  = lapRoundUp;
     UI::PushFont(lapFontStyle == FontStyle::Bold ? UI::Font::DefaultBold : lapFontStyle == FontStyle::Mono ? UI::Font::DefaultMono : UI::Font::Default);
@@ -52,8 +45,8 @@ void Render() {
     bool isRacing = g_uiState.isRacing;
     int  liveTime = g_uiState.liveTime;
     UI::PushStyleColor(UI::Col::WindowBg, lapGradientEnabled ? vec4(0, 0, 0, 0) : lapWindowBgColor);
-    UI::PushStyleColor(UI::Col::Text, isStale ? vec4(lapTextColor.x, lapTextColor.y, lapTextColor.z, lapTextColor.w * 0.45f) : lapTextColor);
-    UI::Begin("LapTimes", windowFlags);
+    UI::PushStyleColor(UI::Col::Text, isStale ? FadedAlpha(lapTextColor) : lapTextColor);
+    UI::Begin("LapTimes", PluginWindowFlags());
 
     if (!lapLockPosition) {
       anchor = UI::GetWindowPos();
@@ -67,7 +60,7 @@ void Render() {
       if (lapShowMapAuthor) {
         string author = GetMapAuthor();
         if (author != "") {
-          vec4 fadedColor = vec4(lapTextColor.x, lapTextColor.y, lapTextColor.z, lapTextColor.w * 0.45f);
+          vec4 fadedColor = FadedAlpha(lapTextColor);
           UI::PushStyleColor(UI::Col::Text, fadedColor);
           UI::PushFontSize(lapFontSize - 4);
           UI::Text(author);

@@ -83,13 +83,6 @@ void RenderCpTable() {
     UI::SetNextWindowPos(int(anchorCp.x), int(anchorCp.y), UI::Cond::FirstUseEver);
   }
 
-  int windowFlags =
-      UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoCollapse |
-      UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoDocking;
-  if (!UI::IsOverlayShown()) {
-    windowFlags |= UI::WindowFlags::NoInputs;
-  }
-
   bool isStale = g_uiState.cpIsStale;
   g_fmtDecimals = int(cpPrecision);
   g_fmtRoundUp  = cpRoundUp;
@@ -97,8 +90,8 @@ void RenderCpTable() {
   UI::PushFontSize(cpFontSize);
   if (cpGradientEnabled && g_cpWinSize.x > 0) DrawGradientBg(anchorCp, g_cpWinSize, cpGradientRadial, cpGradientColor1, cpGradientColor2);
   UI::PushStyleColor(UI::Col::WindowBg, cpGradientEnabled ? vec4(0, 0, 0, 0) : cpWindowBgColor);
-  UI::PushStyleColor(UI::Col::Text, isStale ? vec4(cpTextColor.x, cpTextColor.y, cpTextColor.z, cpTextColor.w * 0.45f) : cpTextColor);
-  UI::Begin("CpTimes", windowFlags);
+  UI::PushStyleColor(UI::Col::Text, isStale ? FadedAlpha(cpTextColor) : cpTextColor);
+  UI::Begin("CpTimes", PluginWindowFlags());
 
   if (!cpLockPosition) {
     anchorCp = UI::GetWindowPos();
