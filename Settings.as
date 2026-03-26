@@ -171,6 +171,8 @@ void LogEventPlayer(const string&in msg) {
   print(msg);
 }
 
+const int COLOR_EDIT_FLAGS = UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex;
+
 [SettingsTab name="Lap Window Colors" icon="PaintBrush"]
 // Settings tab for configuring lap window text and background colors.
 void S_RenderLapColorsTab() {
@@ -184,21 +186,20 @@ void S_RenderLapColorsTab() {
     }
 
     Heading("Text", HEADING_TEXT);
-    lapTextColor = UI::InputColor4("Text color", lapTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    lapTextColor = UI::InputColor4("Text color", lapTextColor, COLOR_EDIT_FLAGS);
 
     Heading("Background", HEADING_BACKGROUND);
     UI::BeginDisabled(lapGradientEnabled);
-    lapWindowBgColor = UI::InputColor4("Background color", lapWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    lapWindowBgColor = UI::InputColor4("Background color", lapWindowBgColor, COLOR_EDIT_FLAGS);
     UI::EndDisabled();
 
     Heading("Gradient", HEADING_GRADIENT);
     lapGradientEnabled = UI::Checkbox("Enable gradient background", lapGradientEnabled);
     UI::BeginDisabled(!lapGradientEnabled);
     lapGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", lapGradientRadial);
-    lapGradientColor1 = UI::InputColor4("Color 1 (top / inner)", lapGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
-    lapGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", lapGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    lapGradientColor1 = UI::InputColor4("Color 1 (top / inner)",    lapGradientColor1, COLOR_EDIT_FLAGS);
+    lapGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", lapGradientColor2, COLOR_EDIT_FLAGS);
     UI::EndDisabled();
-
 }
 
 [SettingsTab name="CP Window Colors" icon="PaintBrush"]
@@ -214,19 +215,18 @@ void S_RenderCpColorsTab() {
     }
 
     Heading("Text", HEADING_TEXT);
-    cpTextColor = UI::InputColor4("Text color", cpTextColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    cpTextColor = UI::InputColor4("Text color", cpTextColor, COLOR_EDIT_FLAGS);
 
     Heading("Background", HEADING_BACKGROUND);
     UI::BeginDisabled(cpGradientEnabled);
-    cpWindowBgColor = UI::InputColor4("Background color", cpWindowBgColor, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    cpWindowBgColor = UI::InputColor4("Background color", cpWindowBgColor, COLOR_EDIT_FLAGS);
     UI::EndDisabled();
 
     Heading("Gradient", HEADING_GRADIENT);
     cpGradientEnabled = UI::Checkbox("Enable gradient background", cpGradientEnabled);
     UI::BeginDisabled(!cpGradientEnabled);
     cpGradientRadial = UI::Checkbox("Radial (off = linear top-to-bottom)", cpGradientRadial);
-    cpGradientColor1 = UI::InputColor4("Color 1 (top / inner)", cpGradientColor1, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
-    cpGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", cpGradientColor2, UI::ColorEditFlags::AlphaBar | UI::ColorEditFlags::AlphaPreviewHalf | UI::ColorEditFlags::DisplayHex);
+    cpGradientColor1 = UI::InputColor4("Color 1 (top / inner)",    cpGradientColor1, COLOR_EDIT_FLAGS);
+    cpGradientColor2 = UI::InputColor4("Color 2 (bottom / outer)", cpGradientColor2, COLOR_EDIT_FLAGS);
     UI::EndDisabled();
-
 }
