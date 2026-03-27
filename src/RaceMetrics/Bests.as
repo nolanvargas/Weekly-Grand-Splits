@@ -6,8 +6,8 @@ class Bests {
   Attempt@ bestCpByCpLapIndex;    // best cp at cp index and lap number both
 
   // Cached bounds for safe getters.
-  private int _numLaps = 0;
-  private int _numCps = 0;
+  int _numLaps = 0;
+  int _numCps = 0;
 
   Bests() {}
 
