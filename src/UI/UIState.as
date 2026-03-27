@@ -21,16 +21,10 @@ class LapDisplayData {
 
 class UIState {
   Attempt@ displayAttempt = null;
-  Bests@   bests           = null;
-  bool isStale    = false;
   bool lapIsStale = false;
   bool cpIsStale  = false;
   bool isRacing   = false;
   int  liveTime   = 0;
-  int  currentLap = 0;
-  bool isFinished = false;
-  int  numCps     = 0;
-  int  numLaps    = 0;
 
   // Per-lap display data, indexed 1..numLaps (index 0 unused).
   array<LapDisplayData@> lapData;
@@ -60,7 +54,6 @@ class UIState {
   // Clears all display state on map change or waypoint update.
   void OnReset() {
     @displayAttempt = null;
-    isStale  = false;
     isRacing = false;
     liveTime = 0;
     lapData.Resize(0);
@@ -70,17 +63,10 @@ class UIState {
 
   // Refreshes all derived display values from game state each frame.
   void Update() {
-    @bests      = g_state.bests;
-    currentLap  = g_state.currentLap;
-    isFinished  = g_state.isFinished;
-    numCps      = g_state.numCps;
-    numLaps     = g_state.numLaps;
-
     bool newStale   = g_state.IsStale();
     bool newRacing  = !g_state.waitForCarReset && !g_state.resetData && !g_state.isFinished && !newStale;
     int  newLive    = newRacing ? Math::Max(0, GetCurrentPlayerRaceTime() - g_state.prevLapRaceTime) : 0;
 
-    isStale  = newStale;
     isRacing = newRacing;
     liveTime = newLive;
 
@@ -118,6 +104,7 @@ class UIState {
 
   // Computes per-lap display values and the total row for rendering.
   private void ComputeLapData(Attempt@ att) {
+    int numLaps = g_state.numLaps;
     lapData.Resize(numLaps + 1); // index 0 unused; laps start at 1
 
     int totalRun          = 0;
@@ -128,15 +115,15 @@ class UIState {
     for (int lapIdx = 1; lapIdx <= numLaps; lapIdx++) {
       LapDisplayData@ d = LapDisplayData();
       int lapTime  = GetLapTimeFrom(att, lapIdx);
-      int bestLap  = bests.GetBestSingleAttemptLapTotal(lapIdx);
+      int bestLap  = g_state.bests.GetBestSingleAttemptLapTotal(lapIdx);
       d.completed  = lapTime != -1;
-      d.active     = isRacing && lapIdx == currentLap;
+      d.active     = isRacing && lapIdx == g_state.currentLap;
 
       if (d.completed) {
         d.lapTime  = lapTime;
         d.hasBest  = bestLap != -1;
         d.delta    = d.hasBest ? (lapTime - bestLap) : 0;
-        int bestAll = bests.GetBestLapTotalByLapIndex(lapIdx);
+        int bestAll = g_state.bests.GetBestLapTotalByLapIndex(lapIdx);
         d.isGold   = bestAll > 0 && lapTime <= bestAll;
 
         totalRun += lapTime;
@@ -153,7 +140,7 @@ class UIState {
     }
 
     displayTotal   = totalRun + (isRacing ? liveTime : 0);
-    hasTotal       = displayTotal > 0 || isFinished;
+    hasTotal       = displayTotal > 0 || g_state.isFinished;
     showTotalDelta = hasCompletedLap && allHaveBest;
     totalDelta     = showTotalDelta ? (totalRun - bestForCompleted) : 0;
     totalColor     = GetDeltaColor(totalDelta, showTotalDelta, false);
@@ -161,7 +148,8 @@ class UIState {
 
   // Computes per-cell CP display values for all lap and CP pairs.
   private void ComputeCpData(Attempt@ att) {
-    numCpCols = numCps;
+    int numLaps = g_state.numLaps;
+    numCpCols = g_state.numCps;
     if (att !is null) {
       for (int lapIdx = 1; lapIdx < int(att.laps.Length); lapIdx++) { // Laps start at 1
         Lap@ lap = att.laps[lapIdx];
@@ -198,9 +186,9 @@ class UIState {
 
   // Returns the reference CP time for a cell based on display mode.
   private int GetCpRefTimeForIdx(int lapIdx, int cpIdx) {
-    if (cpDisplayMode == CpDisplayMode::DeltaPB)          return bests.GetBestSingleAttemptCpTime(lapIdx, cpIdx);
-    if (cpDisplayMode == CpDisplayMode::DeltaBestLapCp)   return bests.GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
-    if (cpDisplayMode == CpDisplayMode::DeltaBestAllTime)  return bests.GetBestAnyCpTime(cpIdx);
+    if (cpDisplayMode == CpDisplayMode::DeltaPB)          return g_state.bests.GetBestSingleAttemptCpTime(lapIdx, cpIdx);
+    if (cpDisplayMode == CpDisplayMode::DeltaBestLapCp)   return g_state.bests.GetBestCpByCpLapIndexTime(lapIdx, cpIdx);
+    if (cpDisplayMode == CpDisplayMode::DeltaBestAllTime)  return g_state.bests.GetBestAnyCpTime(cpIdx);
     return 0;
   }
 
@@ -209,7 +197,7 @@ class UIState {
     if (att is null) return -1;
     if (lapIdx < 0 || lapIdx >= int(att.laps.Length)) return -1;
     Lap@ lap = att.GetLap(lapIdx);
-    if (numCps > 0 && int(lap.checkpoints.Length) != numCps + 1) return -1; // phantom at [0] + numCps real; CPs start at 1
+    if (g_state.numCps > 0 && int(lap.checkpoints.Length) != g_state.numCps + 1) return -1; // phantom at [0] + numCps real; CPs start at 1
     return lap.GetLapTime();
   }
 

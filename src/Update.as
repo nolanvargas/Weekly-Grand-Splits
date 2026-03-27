@@ -1,5 +1,5 @@
 // Polls game state each frame and dispatches race event handlers.
-void Update(float dt) {
+void Update(float deltaTime) {
   string mapId = GetMapId();
 
   if (g_state.currentMap != "" && mapId == "") {

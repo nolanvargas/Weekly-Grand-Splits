@@ -4,9 +4,12 @@ class GameState {
   string currentMap = "";
   int numCps = 0;
   int numLaps = 1;
+  bool isMultiLap = false; // Not the same as notInMultiLapMap
   RaceHistory history;
   Bests@ bests;
-  bool isMultiLap = false;
+
+  Attempt@ currentAttempt;
+  Attempt@ previousAttempt;   // holds the last attempt for faded display until the first new CP
 
   // Race state
   // Lap index passed to Attempt.AppendCheckpointTime (0-based). Only OnLapFinished advances it
@@ -21,24 +24,22 @@ class GameState {
   int playerStartTime = -1;     // Absolute game time (ms) when current run started; -1 unknown.
   int lastCP = 0;               // Index of the last checkpoint the player triggered.
   bool waitingForStart = false;  // True when Player is awaiting at start line (~1500 ms).
-  bool notInMultiLapMap = false;          // True if player is not in a multi-lap map.
+  bool notInMultiLapMap = false; // True if player is not in a multi-lap map.
 
-  Attempt@ currentAttempt;
-  Attempt@ previousAttempt;   // holds the last attempt for faded display until the first new CP
   int currentAttemptId = 0;
   bool pendingAttemptCommenced = false;
   bool pendingWaypointUpdate = false;
-
-  // Returns true when the UI is displaying data from a previous run.
-  bool IsStale() {
-    bool stale = resetData || previousAttempt !is null;
-    return stale;
-  }
 
   // Constructs a GameState and initializes the history and bests objects.
   GameState() {
     history = RaceHistory();
     @bests = Bests();
+  }
+
+  // Returns true when the UI is displaying data from a previous run.
+  bool IsStale() {
+    bool stale = resetData || previousAttempt !is null;
+    return stale;
   }
 
   // --- Player event hooks ---
@@ -159,6 +160,13 @@ class GameState {
     CompleteRun(raceTime);
   }
 
+  // Saves the finish time and archives the completed run to history.
+  void CompleteRun(int raceTime) {
+    finishRaceTime = raceTime;
+    ArchiveCurrentAttempt();
+    g_state.history.SaveData();
+  }
+  
   // Clears the previous attempt reference when a checkpoint is crossed.
   void ClearPreviousOnCheckpointCrossing() {
     @previousAttempt = null;
@@ -169,12 +177,6 @@ class GameState {
     @currentAttempt = null;
   }
 
-  // Saves the finish time and archives the completed run to history.
-  void CompleteRun(int raceTime) {
-    finishRaceTime = raceTime;
-    ArchiveCurrentAttempt();
-    g_state.history.SaveData();
-  }
 }
 
 GameState g_state;

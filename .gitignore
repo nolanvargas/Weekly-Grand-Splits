@@ -232,7 +232,6 @@
 *.sav
 *.ps
 *.eps
-*.pdf
 *.rtf
 *.doc
 *.docx
